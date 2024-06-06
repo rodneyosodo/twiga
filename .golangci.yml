@@ -1,0 +1,37 @@
+# Copyright (c) 2023 rodneyosodo
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at:
+# http://www.apache.org/licenses/LICENSE-2.0
+
+linters:
+  enable-all: true
+  fast: true
+  disable:
+    - lll
+    - wsl
+    - depguard
+    - scopelint
+    - gochecknoinits
+    - tagliatelle
+
+linters-settings:
+  goheader:
+    values:
+      const:
+        NAME: rodneyosodo
+      regexp:
+        YEAR: 20[0-9][0-9]
+    template: |-
+      Copyright (c) {{ YEAR }} {{ NAME }}
+
+      Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License.
+      You may obtain a copy of the License at:
+      http://www.apache.org/licenses/LICENSE-2.0
+  funlen:
+    lines: -1
+    statements: -1
+  gocritic:
+    enable-all: true
