@@ -52,6 +52,7 @@ func stopAllServer(servers ...Server) error {
 			}
 		}
 	}
+
 	return err
 }
 
@@ -67,6 +68,7 @@ func StopSignalHandler(ctx context.Context, cancel context.CancelFunc, logger *s
 			logger.Error(fmt.Sprintf("%s service error during shutdown: %v", svcName, err))
 		}
 		logger.Info(fmt.Sprintf("%s service shutdown by signal: %s", svcName, sig))
+
 		return err
 	case <-ctx.Done():
 		return nil

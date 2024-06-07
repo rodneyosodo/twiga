@@ -132,6 +132,7 @@ func (s *service) UpdateUserUsername(ctx context.Context, token string, user Use
 	if saved.ID != user.ID {
 		return User{}, errors.New("unauthorized")
 	}
+
 	return s.usersRepo.UpdateUsername(ctx, user)
 }
 
