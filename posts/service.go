@@ -150,15 +150,6 @@ func (s *service) DeletePost(ctx context.Context, token string, id string) error
 	return s.repo.Delete(ctx, id)
 }
 
-func (s *service) IdentifyUser(ctx context.Context, token string) (string, error) {
-	resp, err := s.users.IdentifyUser(ctx, &proto.IdentifyUserRequest{Token: token})
-	if err != nil {
-		return "", err
-	}
-
-	return resp.GetId(), nil
-}
-
 func (s *service) CreateComment(ctx context.Context, token string, postID string, comment Comment) (Comment, error) {
 	userID, err := s.IdentifyUser(ctx, token)
 	if err != nil {
@@ -276,4 +267,13 @@ func (s *service) DeleteShare(ctx context.Context, token string, id string) erro
 	}
 
 	return s.repo.DeleteShare(ctx, id)
+}
+
+func (s *service) IdentifyUser(ctx context.Context, token string) (string, error) {
+	resp, err := s.users.IdentifyUser(ctx, &proto.IdentifyUserRequest{Token: token})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.GetId(), nil
 }

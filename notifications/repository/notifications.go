@@ -133,10 +133,11 @@ func (r *repository) RetrieveAllNotifications(ctx context.Context, page notifica
 	}, nil
 }
 
-func (r *repository) ReadNotification(ctx context.Context, id string) error {
-	query := `UPDATE notifications SET is_read = TRUE WHERE id = :id`
+func (r *repository) ReadNotification(ctx context.Context, userID, id string) error {
+	query := `UPDATE notifications SET is_read = TRUE WHERE id = :id AND user_id = :user_id`
 	dNotification := dbNotification{
-		ID: id,
+		ID:     id,
+		UserID: userID,
 	}
 
 	result, err := r.NamedExecContext(ctx, query, dNotification)
