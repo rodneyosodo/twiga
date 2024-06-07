@@ -98,7 +98,7 @@ type Post struct {
 	Content    string    `bson:"content"            json:"content"`
 	Tags       []string  `bson:"tags"               json:"tags"`
 	ImageURL   string    `bson:"image_url"          json:"image_url"`
-	Visibility bool      `bson:"visibility"         json:"visibility"`
+	Visibility *bool     `bson:"visibility"         json:"visibility"`
 	CreatedAt  time.Time `bson:"created_at"         json:"created_at"`
 	UpdatedAt  time.Time `bson:"updated_at"         json:"updated_at"`
 	UserID     string    `bson:"user_id"            json:"user_id"`
