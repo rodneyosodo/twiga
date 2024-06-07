@@ -14,17 +14,17 @@ type Service struct {
 	mock.Mock
 }
 
-// CreateFeed provides a mock function with given fields: ctx, token, feed
-func (_m *Service) CreateFeed(ctx context.Context, token string, feed users.Feed) error {
-	ret := _m.Called(ctx, token, feed)
+// CreateFeed provides a mock function with given fields: ctx, feed
+func (_m *Service) CreateFeed(ctx context.Context, feed users.Feed) error {
+	ret := _m.Called(ctx, feed)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateFeed")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, users.Feed) error); ok {
-		r0 = rf(ctx, token, feed)
+	if rf, ok := ret.Get(0).(func(context.Context, users.Feed) error); ok {
+		r0 = rf(ctx, feed)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -590,9 +590,9 @@ func (_m *Service) UpdateUserEmail(ctx context.Context, token string, user users
 	return r0, r1
 }
 
-// UpdateUserPassword provides a mock function with given fields: ctx, token, id, oldPassword, currentPassowrd
-func (_m *Service) UpdateUserPassword(ctx context.Context, token string, id string, oldPassword string, currentPassowrd string) (users.User, error) {
-	ret := _m.Called(ctx, token, id, oldPassword, currentPassowrd)
+// UpdateUserPassword provides a mock function with given fields: ctx, token, oldPassword, currentPassowrd
+func (_m *Service) UpdateUserPassword(ctx context.Context, token string, oldPassword string, currentPassowrd string) (users.User, error) {
+	ret := _m.Called(ctx, token, oldPassword, currentPassowrd)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUserPassword")
@@ -600,17 +600,17 @@ func (_m *Service) UpdateUserPassword(ctx context.Context, token string, id stri
 
 	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (users.User, error)); ok {
-		return rf(ctx, token, id, oldPassword, currentPassowrd)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (users.User, error)); ok {
+		return rf(ctx, token, oldPassword, currentPassowrd)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) users.User); ok {
-		r0 = rf(ctx, token, id, oldPassword, currentPassowrd)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) users.User); ok {
+		r0 = rf(ctx, token, oldPassword, currentPassowrd)
 	} else {
 		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
-		r1 = rf(ctx, token, id, oldPassword, currentPassowrd)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, token, oldPassword, currentPassowrd)
 	} else {
 		r1 = ret.Error(1)
 	}

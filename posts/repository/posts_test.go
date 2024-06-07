@@ -1121,7 +1121,7 @@ func TestDeleteLike(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := repo.DeleteLike(context.Background(), tc.like.UserID)
+			err := repo.DeleteLike(context.Background(), saved.ID, tc.like.UserID)
 			if tc.err != nil {
 				assert.ErrorContains(t, err, tc.err.Error())
 
@@ -1323,7 +1323,7 @@ func TestDeleteShare(t *testing.T) {
 		{
 			desc: "valid share",
 			share: posts.Share{
-				UserID: share.UserID,
+				ID: share.ID,
 			},
 			err: nil,
 		},
@@ -1335,7 +1335,7 @@ func TestDeleteShare(t *testing.T) {
 		{
 			desc: "invalid share",
 			share: posts.Share{
-				UserID: "invalid_id",
+				ID: "invalid_id",
 			},
 			err: errors.New("share not found"),
 		},
@@ -1343,7 +1343,7 @@ func TestDeleteShare(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := repo.DeleteShare(context.Background(), tc.share.UserID)
+			err := repo.DeleteShare(context.Background(), tc.share.ID)
 			if tc.err != nil {
 				assert.ErrorContains(t, err, tc.err.Error())
 
