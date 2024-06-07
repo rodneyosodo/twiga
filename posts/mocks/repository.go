@@ -162,17 +162,17 @@ func (_m *Repository) DeleteComment(ctx context.Context, id string) error {
 	return r0
 }
 
-// DeleteLike provides a mock function with given fields: ctx, userID
-func (_m *Repository) DeleteLike(ctx context.Context, userID string) error {
-	ret := _m.Called(ctx, userID)
+// DeleteLike provides a mock function with given fields: ctx, postID, userID
+func (_m *Repository) DeleteLike(ctx context.Context, postID string, userID string) error {
+	ret := _m.Called(ctx, postID, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteLike")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, userID)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, postID, userID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -180,9 +180,9 @@ func (_m *Repository) DeleteLike(ctx context.Context, userID string) error {
 	return r0
 }
 
-// DeleteShare provides a mock function with given fields: ctx, userID
-func (_m *Repository) DeleteShare(ctx context.Context, userID string) error {
-	ret := _m.Called(ctx, userID)
+// DeleteShare provides a mock function with given fields: ctx, id
+func (_m *Repository) DeleteShare(ctx context.Context, id string) error {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteShare")
@@ -190,7 +190,7 @@ func (_m *Repository) DeleteShare(ctx context.Context, userID string) error {
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, userID)
+		r0 = rf(ctx, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -355,6 +355,34 @@ func (_m *Repository) RetrieveCommentByID(ctx context.Context, id string) (posts
 		r0 = rf(ctx, id)
 	} else {
 		r0 = ret.Get(0).(posts.Comment)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RetrieveShareByID provides a mock function with given fields: ctx, id
+func (_m *Repository) RetrieveShareByID(ctx context.Context, id string) (posts.Share, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveShareByID")
+	}
+
+	var r0 posts.Share
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (posts.Share, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) posts.Share); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Get(0).(posts.Share)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {

@@ -236,7 +236,7 @@ func (r *repository) RetrieveCommentByID(ctx context.Context, id string) (posts.
 	opt := options.FindOne().SetProjection(bson.D{{Key: "comments.$", Value: 1}})
 
 	var result posts.Post
-	if err := r.db.FindOne(ctx, bson.D{{Key: "comments._id", Value: id}}, opt).Decode(&result); err != nil {
+	if err := r.db.FindOne(ctx, bson.D{{Key: "comments.id", Value: id}}, opt).Decode(&result); err != nil {
 		return posts.Comment{}, err
 	}
 	if len(result.Comments) == 0 {
@@ -290,7 +290,7 @@ func (r *repository) RetrieveAllComments(ctx context.Context, page posts.Page) (
 
 func (r *repository) UpdateComment(ctx context.Context, comment posts.Comment) (posts.Comment, error) {
 	comment.UpdateAt = time.Now().UTC().Round(time.Millisecond)
-	result, err := r.db.UpdateOne(ctx, bson.D{{Key: "comments._id", Value: comment.ID}}, bson.D{{Key: "$set", Value: bson.D{
+	result, err := r.db.UpdateOne(ctx, bson.D{{Key: "comments.id", Value: comment.ID}}, bson.D{{Key: "$set", Value: bson.D{
 		{Key: "comments.$", Value: comment},
 	}}})
 	if err != nil {
@@ -304,9 +304,10 @@ func (r *repository) UpdateComment(ctx context.Context, comment posts.Comment) (
 }
 
 func (r *repository) DeleteComment(ctx context.Context, id string) error {
-	result, err := r.db.UpdateOne(ctx, bson.D{{Key: "comments._id", Value: id}}, bson.D{{Key: "$pull", Value: bson.D{
-		{Key: "comments", Value: bson.D{{Key: "_id", Value: id}}},
-	}}})
+	result, err := r.db.UpdateOne(ctx, bson.D{{Key: "comments.id", Value: id}},
+		bson.D{{Key: "$pull", Value: bson.D{
+			{Key: "comments", Value: bson.D{{Key: "id", Value: id}}},
+		}}})
 	if err != nil {
 		return err
 	}
@@ -379,10 +380,12 @@ func (r *repository) RetrieveAllLikes(ctx context.Context, page posts.Page) (pos
 	return likesPage, nil
 }
 
-func (r *repository) DeleteLike(ctx context.Context, userID string) error {
-	result, err := r.db.UpdateOne(ctx, bson.D{{Key: "likes.user_id", Value: userID}}, bson.D{{Key: "$pull", Value: bson.D{
-		{Key: "likes", Value: bson.D{{Key: "user_id", Value: userID}}},
-	}}})
+func (r *repository) DeleteLike(ctx context.Context, postID, userID string) error {
+	result, err := r.db.UpdateOne(ctx, bson.D{{Key: "likes.user_id", Value: userID}},
+		bson.D{
+			{Key: "$pull", Value: bson.D{{Key: "likes", Value: bson.D{{Key: "user_id", Value: userID}}}}},
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -398,6 +401,12 @@ func (r *repository) CreateShare(ctx context.Context, postID string, share posts
 		return share, errors.New("user ID is required")
 	}
 
+	id, err := uuid.NewV4()
+	if err != nil {
+		return share, err
+	}
+	share.ID = id.String()
+
 	objID, err := primitive.ObjectIDFromHex(postID)
 	if err != nil {
 		return share, err
@@ -410,6 +419,20 @@ func (r *repository) CreateShare(ctx context.Context, postID string, share posts
 	}
 
 	return share, nil
+}
+
+func (r *repository) RetrieveShareByID(ctx context.Context, id string) (posts.Share, error) {
+	opt := options.FindOne().SetProjection(bson.D{{Key: "share.$", Value: 1}})
+
+	var result posts.Post
+	if err := r.db.FindOne(ctx, bson.D{{Key: "share.id", Value: id}}, opt).Decode(&result); err != nil {
+		return posts.Share{}, err
+	}
+	if len(result.Shares) == 0 {
+		return posts.Share{}, errors.New("share not found")
+	}
+
+	return result.Shares[0], nil
 }
 
 func (r *repository) RetrieveAllShares(ctx context.Context, page posts.Page) (posts.SharesPage, error) { //nolint:dupl
@@ -453,10 +476,11 @@ func (r *repository) RetrieveAllShares(ctx context.Context, page posts.Page) (po
 	return sharesPage, nil
 }
 
-func (r *repository) DeleteShare(ctx context.Context, userID string) error {
-	result, err := r.db.UpdateOne(ctx, bson.D{{Key: "shares.user_id", Value: userID}}, bson.D{{Key: "$pull", Value: bson.D{
-		{Key: "shares", Value: bson.D{{Key: "user_id", Value: userID}}},
-	}}})
+func (r *repository) DeleteShare(ctx context.Context, id string) error {
+	result, err := r.db.UpdateOne(ctx, bson.D{{Key: "shares.id", Value: id}},
+		bson.D{{Key: "$pull", Value: bson.D{
+			{Key: "shares", Value: bson.D{{Key: "id", Value: id}}},
+		}}})
 	if err != nil {
 		return err
 	}

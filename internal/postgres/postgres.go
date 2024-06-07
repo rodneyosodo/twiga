@@ -23,8 +23,8 @@ var (
 type Config struct {
 	Host        string `env:"HOST"          envDefault:"localhost"`
 	Port        string `env:"PORT"          envDefault:"5432"`
-	User        string `env:"USER"          envDefault:"magistrala"`
-	Pass        string `env:"PASS"          envDefault:"magistrala"`
+	User        string `env:"USER"          envDefault:"twiga"`
+	Pass        string `env:"PASS"          envDefault:"twiga"`
 	Name        string `env:"NAME"          envDefault:""`
 	SSLMode     string `env:"SSL_MODE"      envDefault:"disable"`
 	SSLCert     string `env:"SSL_CERT"      envDefault:""`

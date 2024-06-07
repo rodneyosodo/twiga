@@ -14,11 +14,11 @@ import (
 )
 
 type Comment struct {
-	ID        string    `bson:"_id,omitempty" json:"id"`
-	Content   string    `bson:"content"       json:"content"`
-	CreatedAt time.Time `bson:"created_at"    json:"created_at"`
-	UpdateAt  time.Time `bson:"updated_at"    json:"updated_at"`
-	UserID    string    `bson:"user_id"       json:"user_id"`
+	ID        string    `bson:"id,omitempty" json:"id"`
+	Content   string    `bson:"content"      json:"content"`
+	CreatedAt time.Time `bson:"created_at"   json:"created_at"`
+	UpdateAt  time.Time `bson:"updated_at"   json:"updated_at"`
+	UserID    string    `bson:"user_id"      json:"user_id"`
 }
 
 type CommentsPage struct {
@@ -67,8 +67,9 @@ func (page LikesPage) MarshalJSON() ([]byte, error) {
 }
 
 type Share struct {
-	UserID    string    `bson:"user_id"    json:"user_id"`
-	CreatedAt time.Time `bson:"created_at" json:"created_at"`
+	ID        string    `bson:"id,omitempty" json:"id"`
+	UserID    string    `bson:"user_id"      json:"user_id"`
+	CreatedAt time.Time `bson:"created_at"   json:"created_at"`
 }
 
 type SharesPage struct {
@@ -178,9 +179,36 @@ type Repository interface { //nolint:interfacebloat
 
 	CreateLike(ctx context.Context, postID string, like Like) (Like, error)
 	RetrieveAllLikes(ctx context.Context, page Page) (LikesPage, error)
-	DeleteLike(ctx context.Context, userID string) error
+	DeleteLike(ctx context.Context, postID, userID string) error
 
 	CreateShare(ctx context.Context, postID string, share Share) (Share, error)
+	RetrieveShareByID(ctx context.Context, id string) (Share, error)
 	RetrieveAllShares(ctx context.Context, page Page) (SharesPage, error)
-	DeleteShare(ctx context.Context, userID string) error
+	DeleteShare(ctx context.Context, id string) error
+}
+
+type Service interface { //nolint:interfacebloat
+	CreatePost(ctx context.Context, token string, post Post) (Post, error)
+	RetrievePostByID(ctx context.Context, token string, id string) (Post, error)
+	RetrieveAllPosts(ctx context.Context, token string, page Page) (PostsPage, error)
+	UpdatePost(ctx context.Context, token string, post Post) (Post, error)
+	UpdatePostContent(ctx context.Context, token string, post Post) (Post, error)
+	UpdatePostTags(ctx context.Context, token string, post Post) (Post, error)
+	UpdatePostImageURL(ctx context.Context, token string, post Post) (Post, error)
+	UpdatePostVisibility(ctx context.Context, token string, post Post) (Post, error)
+	DeletePost(ctx context.Context, token string, id string) error
+
+	CreateComment(ctx context.Context, token string, postID string, comment Comment) (Comment, error)
+	RetrieveCommentByID(ctx context.Context, token string, id string) (Comment, error)
+	RetrieveAllComments(ctx context.Context, token string, page Page) (CommentsPage, error)
+	UpdateComment(ctx context.Context, token string, comment Comment) (Comment, error)
+	DeleteComment(ctx context.Context, roken, id string) error
+
+	CreateLike(ctx context.Context, token string, postID string, like Like) (Like, error)
+	RetrieveAllLikes(ctx context.Context, token string, page Page) (LikesPage, error)
+	DeleteLike(ctx context.Context, token string, postID string) error
+
+	CreateShare(ctx context.Context, token string, postID string, share Share) (Share, error)
+	RetrieveAllShares(ctx context.Context, token string, page Page) (SharesPage, error)
+	DeleteShare(ctx context.Context, token string, postID string) error
 }
