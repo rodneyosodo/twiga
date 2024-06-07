@@ -117,7 +117,7 @@ type Repository interface { //nolint:interfacebloat
 	CreateNotification(ctx context.Context, notification Notification) (Notification, error)
 	RetrieveNotification(ctx context.Context, id string) (Notification, error)
 	RetrieveAllNotifications(ctx context.Context, page Page) (NotificationsPage, error)
-	ReadNotification(ctx context.Context, id string) error
+	ReadNotification(ctx context.Context, userID, id string) error
 	ReadAllNotifications(ctx context.Context, page Page) error
 	DeleteNotification(ctx context.Context, id string) error
 
@@ -128,4 +128,22 @@ type Repository interface { //nolint:interfacebloat
 	UpdateEmailSetting(ctx context.Context, id string, isEnabled bool) error
 	UpdatePushSetting(ctx context.Context, id string, isEnabled bool) error
 	DeleteSetting(ctx context.Context, id string) error
+}
+
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet
+type Service interface { //nolint:interfacebloat
+	CreateNotification(ctx context.Context, token string, notification Notification) (Notification, error)
+	RetrieveNotification(ctx context.Context, token string, id string) (Notification, error)
+	RetrieveAllNotifications(ctx context.Context, token string, page Page) (NotificationsPage, error)
+	ReadNotification(ctx context.Context, token string, id string) error
+	ReadAllNotifications(ctx context.Context, token string, page Page) error
+	DeleteNotification(ctx context.Context, token string, id string) error
+
+	CreateSetting(ctx context.Context, token string, setting Setting) (Setting, error)
+	RetrieveSetting(ctx context.Context, token string, id string) (Setting, error)
+	RetrieveAllSettings(ctx context.Context, token string, page Page) (SettingsPage, error)
+	UpdateSetting(ctx context.Context, token string, setting Setting) error
+	UpdateEmailSetting(ctx context.Context, token string, id string, isEnabled bool) error
+	UpdatePushSetting(ctx context.Context, token string, id string, isEnabled bool) error
+	DeleteSetting(ctx context.Context, token string, id string) error
 }

@@ -187,6 +187,7 @@ type Repository interface { //nolint:interfacebloat
 	DeleteShare(ctx context.Context, id string) error
 }
 
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet
 type Service interface { //nolint:interfacebloat
 	CreatePost(ctx context.Context, token string, post Post) (Post, error)
 	RetrievePostByID(ctx context.Context, token string, id string) (Post, error)

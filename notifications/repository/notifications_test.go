@@ -359,7 +359,7 @@ func TestReadNotification(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := repo.ReadNotification(context.Background(), tc.id)
+			err := repo.ReadNotification(context.Background(), notification.UserID, tc.id)
 			switch {
 			case tc.err != nil:
 				assert.ErrorContains(t, err, tc.err.Error())
