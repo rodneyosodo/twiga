@@ -43,9 +43,7 @@ message CreateFeedRequest {
 }
 
 message CreateFeedResponse {
-  string user_id = 1;
-  string post_id = 2;
-  string created_at = 3;
+  string message = 1;
 }
 
 message IdentifyUserRequest { string token = 1; }

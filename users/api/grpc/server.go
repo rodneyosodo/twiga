@@ -75,7 +75,10 @@ func decodeGetUserByIDRequest(_ context.Context, grpcReq interface{}) (interface
 		return nil, encodeError(errors.New("invalid request"))
 	}
 
-	return req, nil
+	return api.EntityReq{
+		ID:  req.GetId(),
+		SVC: api.GRPC,
+	}, nil
 }
 
 func encodeGetUserByIDResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -114,7 +117,10 @@ func decodeGetUserPreferencesRequest(_ context.Context, grpcReq interface{}) (in
 		return nil, encodeError(errors.New("invalid request"))
 	}
 
-	return req, nil
+	return api.GetPreferenceReq{
+		SVC: api.GRPC,
+		ID:  req.GetId(),
+	}, nil
 }
 
 func encodeGetUserPreferencesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
@@ -148,19 +154,22 @@ func decodeCreateFeedRequest(_ context.Context, grpcReq interface{}) (interface{
 		return nil, encodeError(errors.New("invalid request"))
 	}
 
-	return req, nil
+	return api.CreateFeedReq{
+		Feed: users.Feed{
+			UserID: req.GetUserId(),
+			PostID: req.GetPostId(),
+		},
+	}, nil
 }
 
 func encodeCreateFeedResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
-	res, ok := grpcRes.(users.Feed)
+	res, ok := grpcRes.(map[string]string)
 	if !ok {
 		return nil, encodeError(errors.New("invalid response"))
 	}
 
 	return &proto.CreateFeedResponse{
-		UserId:    res.UserID,
-		PostId:    res.PostID,
-		CreatedAt: res.CreatedAt.Format(time.RFC3339),
+		Message: res["message"],
 	}, nil
 }
 
@@ -183,7 +192,9 @@ func decodeIdentifyUserRequest(_ context.Context, grpcReq interface{}) (interfac
 		return nil, encodeError(errors.New("invalid request"))
 	}
 
-	return req, nil
+	return api.RefreshTokenReq{
+		Token: req.GetToken(),
+	}, nil
 }
 
 func encodeIdentifyUserResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {

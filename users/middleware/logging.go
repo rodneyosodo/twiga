@@ -187,14 +187,10 @@ func (lm *loggingMiddleware) UpdateUserUsername(ctx context.Context, token strin
 	return lm.svc.UpdateUserUsername(ctx, token, user)
 }
 
-func (lm *loggingMiddleware) UpdateUserPassword(ctx context.Context, token, oldPassword, newPassword string) (u users.User, err error) {
+func (lm *loggingMiddleware) UpdateUserPassword(ctx context.Context, token, oldPassword, newPassword string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.Group("user",
-				slog.String("id", u.ID),
-				slog.String("username", u.Username),
-			),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -331,7 +327,7 @@ func (lm *loggingMiddleware) CreatePreferences(ctx context.Context, token string
 	return lm.svc.CreatePreferences(ctx, token, preference)
 }
 
-func (lm *loggingMiddleware) GetPreferencesByUserID(ctx context.Context, token string) (p users.Preference, err error) {
+func (lm *loggingMiddleware) GetPreferencesByUserID(ctx context.Context, token, id string) (p users.Preference, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -346,7 +342,7 @@ func (lm *loggingMiddleware) GetPreferencesByUserID(ctx context.Context, token s
 		lm.logger.Info("Get preferences by user ID completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.GetPreferencesByUserID(ctx, token)
+	return lm.svc.GetPreferencesByUserID(ctx, token, id)
 }
 
 func (lm *loggingMiddleware) GetPreferences(ctx context.Context, token string, page users.Page) (pp users.PreferencesPage, err error) {

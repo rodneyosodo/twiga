@@ -58,7 +58,7 @@ func GetUserEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		user, err := svc.GetUserByID(ctx, req.ID, req.Token)
+		user, err := svc.GetUserByID(ctx, req.Token, req.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -133,12 +133,11 @@ func UpdatePasswordEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		user, err := svc.UpdateUserPassword(ctx, req.Token, req.OldPassword, req.CurrentPassowrd)
-		if err != nil {
+		if err := svc.UpdateUserPassword(ctx, req.Token, req.OldPassword, req.CurrentPassowrd); err != nil {
 			return nil, err
 		}
 
-		return user, nil
+		return map[string]string{"message": "password updated"}, nil
 	}
 }
 
@@ -178,7 +177,7 @@ func IssueTokenEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return token, nil
+		return map[string]string{"token": token}, nil
 	}
 }
 
@@ -198,7 +197,7 @@ func RefreshTokenEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return token, nil
+		return map[string]string{"token": token}, nil
 	}
 }
 
@@ -224,7 +223,7 @@ func CreatePreferenceEndpoint(svc users.Service) endpoint.Endpoint {
 
 func GetUserPreferenceEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req, ok := request.(EntityReq)
+		req, ok := request.(GetPreferenceReq)
 		if !ok {
 			return nil, errors.New("invalid request")
 		}
@@ -233,7 +232,7 @@ func GetUserPreferenceEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		preference, err := svc.GetPreferencesByUserID(ctx, req.Token)
+		preference, err := svc.GetPreferencesByUserID(ctx, req.Token, req.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -310,7 +309,7 @@ func FollowEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return nil, nil
+		return map[string]string{"message": "followed"}, nil
 	}
 }
 
@@ -332,7 +331,7 @@ func UnfollowEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return nil, nil
+		return map[string]string{"message": "unfollowed"}, nil
 	}
 }
 
@@ -371,7 +370,7 @@ func CreateFeedEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return nil, nil
+		return map[string]string{"message": "feed created"}, nil
 	}
 }
 

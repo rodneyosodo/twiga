@@ -103,7 +103,7 @@ func (m *metricsMiddleware) UpdateUserUsername(ctx context.Context, token string
 	return m.svc.UpdateUserUsername(ctx, token, user)
 }
 
-func (m *metricsMiddleware) UpdateUserPassword(ctx context.Context, token string, oldPassword, currentPassowrd string) (updated users.User, err error) {
+func (m *metricsMiddleware) UpdateUserPassword(ctx context.Context, token string, oldPassword, currentPassowrd string) (err error) {
 	defer func(begin time.Time) {
 		m.counter.With("method", "update_user_password").Add(1)
 		m.latency.With("method", "update_user_password").Observe(time.Since(begin).Seconds())
@@ -166,13 +166,13 @@ func (m *metricsMiddleware) CreatePreferences(ctx context.Context, token string,
 	return m.svc.CreatePreferences(ctx, token, preference)
 }
 
-func (m *metricsMiddleware) GetPreferencesByUserID(ctx context.Context, token string) (preference users.Preference, err error) {
+func (m *metricsMiddleware) GetPreferencesByUserID(ctx context.Context, token, id string) (preference users.Preference, err error) {
 	defer func(begin time.Time) {
 		m.counter.With("method", "get_preferences_by_user_id").Add(1)
 		m.latency.With("method", "get_preferences_by_user_id").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return m.svc.GetPreferencesByUserID(ctx, token)
+	return m.svc.GetPreferencesByUserID(ctx, token, id)
 }
 
 func (m *metricsMiddleware) GetPreferences(ctx context.Context, token string, page users.Page) (preferences users.PreferencesPage, err error) {

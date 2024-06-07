@@ -40,15 +40,15 @@ func NewService(usersRepo UsersRepository, preferencesRepo PreferencesRepository
 }
 
 func (s *service) IssueToken(ctx context.Context, user User) (string, error) {
-	user, err := s.usersRepo.RetrieveByEmail(ctx, user.Email)
+	saved, err := s.usersRepo.RetrieveByEmail(ctx, user.Email)
 	if err != nil {
 		return "", err
 	}
-	if err := ComparePassword(user.Password, user.Password); err != nil {
+	if err := ComparePassword(user.Password, saved.Password); err != nil {
 		return "", err
 	}
 
-	return s.tokenizer.Issue(user.ID)
+	return s.tokenizer.Issue(saved.ID)
 }
 
 func (s *service) RefreshToken(ctx context.Context, token string) (string, error) {
@@ -80,15 +80,19 @@ func (s *service) CreateUser(ctx context.Context, user User) (User, error) {
 	if user.PictureURL == "" {
 		user.PictureURL = defAvatar + user.DisplayName
 	}
+	if user.Email == "" {
+		return User{}, errors.New("email is required")
+	}
+	hashedPassword, err := HashPassword(user.Password)
+	if err != nil {
+		return User{}, err
+	}
+	user.Password = hashedPassword
 
 	return s.usersRepo.Create(ctx, user)
 }
 
 func (s *service) GetUserByID(ctx context.Context, token string, id string) (User, error) {
-	if _, err := s.tokenizer.Validate(token); err != nil {
-		return User{}, err
-	}
-
 	return s.usersRepo.RetrieveByID(ctx, id)
 }
 
@@ -105,7 +109,13 @@ func (s *service) UpdateUser(ctx context.Context, token string, user User) (User
 	if err != nil {
 		return User{}, err
 	}
-	user.ID = userID
+	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
+	if err != nil {
+		return User{}, err
+	}
+	if saved.ID != user.ID {
+		return User{}, errors.New("unauthorized")
+	}
 
 	return s.usersRepo.Update(ctx, user)
 }
@@ -115,28 +125,42 @@ func (s *service) UpdateUserUsername(ctx context.Context, token string, user Use
 	if err != nil {
 		return User{}, err
 	}
-	user.ID = userID
-
+	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
+	if err != nil {
+		return User{}, err
+	}
+	if saved.ID != user.ID {
+		return User{}, errors.New("unauthorized")
+	}
 	return s.usersRepo.UpdateUsername(ctx, user)
 }
 
-func (s *service) UpdateUserPassword(ctx context.Context, token string, oldPassword, currentPassowrd string) (User, error) {
+func (s *service) UpdateUserPassword(ctx context.Context, token string, oldPassword, currentPassowrd string) error {
 	userID, err := s.tokenizer.Validate(token)
 	if err != nil {
-		return User{}, err
+		return err
 	}
 
 	user, err := s.usersRepo.RetrieveByID(ctx, userID)
 	if err != nil {
-		return User{}, err
+		return err
 	}
+	if user.ID != userID {
+		return errors.New("unauthorized")
+	}
+
+	user, err = s.usersRepo.RetrieveByEmail(ctx, user.Email)
+	if err != nil {
+		return err
+	}
+
 	if err := ComparePassword(oldPassword, user.Password); err != nil {
-		return User{}, err
+		return err
 	}
 
 	user.Password, err = HashPassword(currentPassowrd)
 	if err != nil {
-		return User{}, err
+		return err
 	}
 
 	return s.usersRepo.UpdatePassword(ctx, user)
@@ -147,7 +171,13 @@ func (s *service) UpdateUserEmail(ctx context.Context, token string, user User) 
 	if err != nil {
 		return User{}, err
 	}
-	user.ID = userID
+	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
+	if err != nil {
+		return User{}, err
+	}
+	if saved.ID != user.ID {
+		return User{}, errors.New("unauthorized")
+	}
 
 	return s.usersRepo.UpdateEmail(ctx, user)
 }
@@ -157,7 +187,13 @@ func (s *service) UpdateUserBio(ctx context.Context, token string, user User) (U
 	if err != nil {
 		return User{}, err
 	}
-	user.ID = userID
+	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
+	if err != nil {
+		return User{}, err
+	}
+	if saved.ID != user.ID {
+		return User{}, errors.New("unauthorized")
+	}
 
 	return s.usersRepo.UpdateBio(ctx, user)
 }
@@ -167,7 +203,13 @@ func (s *service) UpdateUserPictureURL(ctx context.Context, token string, user U
 	if err != nil {
 		return User{}, err
 	}
-	user.ID = userID
+	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
+	if err != nil {
+		return User{}, err
+	}
+	if saved.ID != user.ID {
+		return User{}, errors.New("unauthorized")
+	}
 
 	return s.usersRepo.UpdatePictureURL(ctx, user)
 }
@@ -177,7 +219,13 @@ func (s *service) UpdateUserPreferences(ctx context.Context, token string, user 
 	if err != nil {
 		return User{}, err
 	}
-	user.ID = userID
+	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
+	if err != nil {
+		return User{}, err
+	}
+	if saved.ID != user.ID {
+		return User{}, errors.New("unauthorized")
+	}
 
 	return s.usersRepo.UpdatePreferences(ctx, user)
 }
@@ -204,13 +252,17 @@ func (s *service) CreatePreferences(ctx context.Context, token string, preferenc
 	return s.preferencesRepo.Create(ctx, preference)
 }
 
-func (s *service) GetPreferencesByUserID(ctx context.Context, token string) (Preference, error) {
-	userID, err := s.tokenizer.Validate(token)
-	if err != nil {
-		return Preference{}, err
+func (s *service) GetPreferencesByUserID(ctx context.Context, token, id string) (Preference, error) {
+	if token != "" {
+		userID, err := s.tokenizer.Validate(token)
+		if err != nil {
+			return Preference{}, err
+		}
+
+		id = userID
 	}
 
-	return s.preferencesRepo.RetrieveByUserID(ctx, userID)
+	return s.preferencesRepo.RetrieveByUserID(ctx, id)
 }
 
 func (s *service) GetPreferences(ctx context.Context, token string, page Page) (PreferencesPage, error) {

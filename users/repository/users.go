@@ -157,12 +157,16 @@ func (r *uRepository) UpdateUsername(ctx context.Context, user users.User) (user
 	return r.update(ctx, query, user)
 }
 
-func (r *uRepository) UpdatePassword(ctx context.Context, user users.User) (users.User, error) {
+func (r *uRepository) UpdatePassword(ctx context.Context, user users.User) error {
 	query := fmt.Sprintf(`UPDATE users SET password = :password, updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id
 			RETURNING %s`, defReturnCols)
 
-	return r.update(ctx, query, user)
+	if _, err := r.update(ctx, query, user); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *uRepository) UpdateEmail(ctx context.Context, user users.User) (users.User, error) {

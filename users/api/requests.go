@@ -36,6 +36,7 @@ func (req CreateUserReq) validate() error {
 type EntityReq struct {
 	ID    string
 	Token string
+	SVC   SVC
 }
 
 func (req EntityReq) validate() error {
@@ -43,7 +44,7 @@ func (req EntityReq) validate() error {
 		return errors.New("id is required")
 	}
 
-	if req.Token == "" {
+	if req.Token == "" && req.SVC == HTTP {
 		return errors.New("token is required")
 	}
 
@@ -65,11 +66,11 @@ func (req EntitiesReq) validate() error {
 
 type UpdateUserReq struct {
 	Token string
-	User  users.User
+	users.User
 }
 
 func (req UpdateUserReq) validate(field entityField) error {
-	if req.User.ID == "" {
+	if req.ID == "" {
 		return errors.New("id is required")
 	}
 
@@ -77,21 +78,21 @@ func (req UpdateUserReq) validate(field entityField) error {
 		return errors.New("token is required")
 	}
 
-	if req.User.Username == "" && field == UsernameField {
+	if req.Username == "" && field == UsernameField {
 		return errors.New("username is required")
 	}
 
-	if req.User.Email == "" && field == EmailField {
+	if req.Email == "" && field == EmailField {
 		return errors.New("email is required")
 	}
 
-	if req.User.Bio == "" && field == BioField {
+	if req.Bio == "" && field == BioField {
 		return errors.New("bio is required")
 	}
-	if req.User.PictureURL == "" && field == PictureField {
+	if req.PictureURL == "" && field == PictureField {
 		return errors.New("picture_url is required")
 	}
-	if req.User.Preferences == nil && field == PreferencesField {
+	if req.Preferences == nil && field == PreferencesField {
 		return errors.New("preferences is required")
 	}
 
@@ -100,8 +101,8 @@ func (req UpdateUserReq) validate(field entityField) error {
 
 type UpdatePasswordReq struct {
 	Token           string
-	OldPassword     string
-	CurrentPassowrd string
+	OldPassword     string `json:"old_password"`
+	CurrentPassowrd string `json:"current_password"`
 }
 
 func (req UpdatePasswordReq) validate() error {
@@ -121,15 +122,15 @@ func (req UpdatePasswordReq) validate() error {
 }
 
 type IssueTokenReq struct {
-	User users.User
+	users.User
 }
 
 func (req IssueTokenReq) validate() error {
-	if req.User.Email == "" {
+	if req.Email == "" {
 		return errors.New("email is required")
 	}
 
-	if req.User.Password == "" {
+	if req.Password == "" {
 		return errors.New("password is required")
 	}
 
@@ -149,8 +150,8 @@ func (req RefreshTokenReq) validate() error {
 }
 
 type CreatePreferenceReq struct {
-	Token      string
-	Preference users.Preference
+	Token string
+	users.Preference
 }
 
 func (req CreatePreferenceReq) validate() error {
@@ -161,9 +162,30 @@ func (req CreatePreferenceReq) validate() error {
 	return nil
 }
 
+type SVC uint8
+
+const (
+	HTTP SVC = iota
+	GRPC
+)
+
+type GetPreferenceReq struct {
+	Token string
+	ID    string
+	SVC   SVC
+}
+
+func (req GetPreferenceReq) validate() error {
+	if req.Token == "" && req.SVC == HTTP {
+		return errors.New("token is required")
+	}
+
+	return nil
+}
+
 type UpdatePreferenceReq struct {
-	Token      string
-	Preference users.Preference
+	Token string
+	users.Preference
 }
 
 func (req UpdatePreferenceReq) validate() error {
@@ -192,7 +214,7 @@ func (req FollowReq) validate() error {
 }
 
 type CreateFeedReq struct {
-	Feed users.Feed
+	users.Feed
 }
 
 func (req CreateFeedReq) validate() error {

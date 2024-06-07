@@ -507,7 +507,7 @@ func TestUpdatePassword(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			user, err := repo.UpdatePassword(context.Background(), tc.user)
+			err := repo.UpdatePassword(context.Background(), tc.user)
 			switch {
 			case err == nil:
 				user, err := repo.RetrieveByEmail(context.Background(), saved.Email)

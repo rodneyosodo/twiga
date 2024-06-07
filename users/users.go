@@ -17,20 +17,20 @@ type Page struct {
 	Total      uint64 `db:"total"       json:"total"`
 	Offset     uint64 `db:"offset"      json:"offset"`
 	Limit      uint64 `db:"limit"       json:"limit"`
-	FollowerID string `db:"follower_id" json:"follower_id"`
-	FolloweeID string `db:"followee_id" json:"followee_id"`
-	UserID     string `db:"user_id"     json:"user_id"`
+	FollowerID string `db:"follower_id" json:"follower_id,omitempty"`
+	FolloweeID string `db:"followee_id" json:"followee_id,omitempty"`
+	UserID     string `db:"user_id"     json:"user_id,omitempty"`
 }
 
 type User struct {
 	ID          string    `json:"id"`
 	Username    string    `json:"username"`
 	DisplayName string    `json:"display_name"`
-	Bio         string    `json:"bio"`
-	PictureURL  string    `json:"picture_url"`
+	Bio         string    `json:"bio,omitempty"`
+	PictureURL  string    `json:"picture_url,omitempty"`
 	Email       string    `json:"email"`
-	Password    string    `json:"password"`
-	Preferences []string  `json:"preferences"`
+	Password    string    `json:"password,omitempty"`
+	Preferences []string  `json:"preferences,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -157,7 +157,7 @@ type UsersRepository interface { //nolint:interfacebloat
 	RetrieveAll(ctx context.Context, page Page) (UsersPage, error)
 	Update(ctx context.Context, user User) (User, error)
 	UpdateUsername(ctx context.Context, user User) (User, error)
-	UpdatePassword(ctx context.Context, user User) (User, error)
+	UpdatePassword(ctx context.Context, user User) error
 	UpdateEmail(ctx context.Context, user User) (User, error)
 	UpdateBio(ctx context.Context, user User) (User, error)
 	UpdatePictureURL(ctx context.Context, user User) (User, error)
@@ -200,7 +200,7 @@ type Service interface { //nolint:interfacebloat
 	GetUsers(ctx context.Context, token string, page Page) (UsersPage, error)
 	UpdateUser(ctx context.Context, token string, user User) (User, error)
 	UpdateUserUsername(ctx context.Context, token string, user User) (User, error)
-	UpdateUserPassword(ctx context.Context, token string, oldPassword, currentPassowrd string) (User, error)
+	UpdateUserPassword(ctx context.Context, token string, oldPassword, currentPassowrd string) error
 	UpdateUserEmail(ctx context.Context, token string, user User) (User, error)
 	UpdateUserBio(ctx context.Context, token string, user User) (User, error)
 	UpdateUserPictureURL(ctx context.Context, token string, user User) (User, error)
@@ -208,7 +208,7 @@ type Service interface { //nolint:interfacebloat
 	DeleteUser(ctx context.Context, token string, id string) error
 
 	CreatePreferences(ctx context.Context, token string, preference Preference) (Preference, error)
-	GetPreferencesByUserID(ctx context.Context, token string) (Preference, error)
+	GetPreferencesByUserID(ctx context.Context, token, id string) (Preference, error)
 	GetPreferences(ctx context.Context, token string, page Page) (PreferencesPage, error)
 	UpdatePreferences(ctx context.Context, token string, preference Preference) (Preference, error)
 	UpdateEmailPreferences(ctx context.Context, token string, preference Preference) (Preference, error)

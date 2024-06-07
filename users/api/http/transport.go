@@ -15,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	iapi "github.com/rodneyosodo/twiga/internal/api"
 	"github.com/rodneyosodo/twiga/users"
 	"github.com/rodneyosodo/twiga/users/api"
@@ -106,8 +107,8 @@ func MakeHandler(svc users.Service) http.Handler {
 				iapi.EncodeResponse,
 				opts...,
 			), "follow_user").ServeHTTP)
-			r.Post("/unfollow", otelhttp.NewHandler(kithttp.NewServer(
-				api.FollowEndpoint(svc),
+			r.Delete("/unfollow", otelhttp.NewHandler(kithttp.NewServer(
+				api.UnfollowEndpoint(svc),
 				decodeFollowRequest,
 				iapi.EncodeResponse,
 				opts...,
@@ -145,13 +146,13 @@ func MakeHandler(svc users.Service) http.Handler {
 		r.Route("/preferences", func(r chi.Router) {
 			r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 				api.CreatePreferenceEndpoint(svc),
-				decodeUpdatePreferenceRequest,
+				decodeCreatePreferenceRequest,
 				iapi.EncodeResponse,
 				opts...,
 			), "create_user_preferences").ServeHTTP)
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 				api.GetUserPreferenceEndpoint(svc),
-				decodeCreatePreferenceRequest,
+				decodeGetPreferenceRequest,
 				iapi.EncodeResponse,
 				opts...,
 			), "get_user_preferences").ServeHTTP)
@@ -183,6 +184,9 @@ func MakeHandler(svc users.Service) http.Handler {
 		), "get_feed").ServeHTTP)
 	})
 
+	r.HandleFunc("/version", iapi.Version("users"))
+	r.Handle("/metrics", promhttp.Handler())
+
 	return r
 }
 
@@ -199,6 +203,9 @@ func decodeGetUsersRequest(_ context.Context, r *http.Request) (interface{}, err
 	var req api.EntitiesReq
 	req.Token = iapi.ExtractToken(r)
 	offset := r.URL.Query().Get("offset")
+	if offset == "" {
+		offset = "0"
+	}
 	intOffset, err := strconv.Atoi(offset)
 	if err != nil {
 		return nil, err
@@ -206,6 +213,9 @@ func decodeGetUsersRequest(_ context.Context, r *http.Request) (interface{}, err
 	req.Page.Offset = uint64(intOffset)
 
 	limit := r.URL.Query().Get("limit")
+	if limit == "" {
+		limit = "10"
+	}
 	intLimit, err := strconv.Atoi(limit)
 	if err != nil {
 		return nil, err
@@ -270,6 +280,13 @@ func decodeCreatePreferenceRequest(_ context.Context, r *http.Request) (interfac
 	return req, nil
 }
 
+func decodeGetPreferenceRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	var req api.GetPreferenceReq
+	req.Token = iapi.ExtractToken(r)
+
+	return req, nil
+}
+
 func decodeUpdatePreferenceRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	var req api.UpdatePreferenceReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -292,6 +309,9 @@ func decodeGetFollowersRequest(_ context.Context, r *http.Request) (interface{},
 	var req api.EntitiesReq
 	req.Token = iapi.ExtractToken(r)
 	offset := r.URL.Query().Get("offset")
+	if offset == "" {
+		offset = "0"
+	}
 	intOffset, err := strconv.Atoi(offset)
 	if err != nil {
 		return nil, err
@@ -299,6 +319,9 @@ func decodeGetFollowersRequest(_ context.Context, r *http.Request) (interface{},
 	req.Page.Offset = uint64(intOffset)
 
 	limit := r.URL.Query().Get("limit")
+	if limit == "" {
+		limit = "10"
+	}
 	intLimit, err := strconv.Atoi(limit)
 	if err != nil {
 		return nil, err
@@ -314,6 +337,9 @@ func decodeGetFollowingsRequest(_ context.Context, r *http.Request) (interface{}
 	var req api.EntitiesReq
 	req.Token = iapi.ExtractToken(r)
 	offset := r.URL.Query().Get("offset")
+	if offset == "" {
+		offset = "0"
+	}
 	intOffset, err := strconv.Atoi(offset)
 	if err != nil {
 		return nil, err
@@ -321,6 +347,9 @@ func decodeGetFollowingsRequest(_ context.Context, r *http.Request) (interface{}
 	req.Page.Offset = uint64(intOffset)
 
 	limit := r.URL.Query().Get("limit")
+	if limit == "" {
+		limit = "10"
+	}
 	intLimit, err := strconv.Atoi(limit)
 	if err != nil {
 		return nil, err

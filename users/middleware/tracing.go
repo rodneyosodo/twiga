@@ -100,10 +100,8 @@ func (m *tracingMiddleware) UpdateUserUsername(ctx context.Context, token string
 	return m.svc.UpdateUserUsername(ctx, token, user)
 }
 
-func (m *tracingMiddleware) UpdateUserPassword(ctx context.Context, token, oldPassword, newPassword string) (updated users.User, err error) {
-	ctx, span := m.tracer.Start(ctx, "update_user_password", trace.WithAttributes(
-		attribute.String("user_id", updated.ID),
-	))
+func (m *tracingMiddleware) UpdateUserPassword(ctx context.Context, token, oldPassword, newPassword string) (err error) {
+	ctx, span := m.tracer.Start(ctx, "update_user_password")
 	defer span.End()
 
 	return m.svc.UpdateUserPassword(ctx, token, oldPassword, newPassword)
@@ -168,11 +166,11 @@ func (m *tracingMiddleware) CreatePreferences(ctx context.Context, token string,
 	return m.svc.CreatePreferences(ctx, token, preference)
 }
 
-func (m *tracingMiddleware) GetPreferencesByUserID(ctx context.Context, token string) (preference users.Preference, err error) {
+func (m *tracingMiddleware) GetPreferencesByUserID(ctx context.Context, token, id string) (preference users.Preference, err error) {
 	ctx, span := m.tracer.Start(ctx, "get_preferences_by_user_id")
 	defer span.End()
 
-	return m.svc.GetPreferencesByUserID(ctx, token)
+	return m.svc.GetPreferencesByUserID(ctx, token, id)
 }
 
 func (m *tracingMiddleware) GetPreferences(ctx context.Context, token string, page users.Page) (preferences users.PreferencesPage, err error) {
