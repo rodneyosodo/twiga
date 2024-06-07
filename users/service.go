@@ -9,11 +9,11 @@ package users
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/0x6flab/namegenerator"
 	"github.com/gofrs/uuid"
-	"github.com/rodneyosodo/twiga/internal/cache"
 )
 
 var (
@@ -26,16 +26,41 @@ type service struct {
 	preferencesRepo PreferencesRepository
 	followingRepo   FollowingRepository
 	feedRepo        FeedRepository
-	cacher          cache.Cache
+	tokenizer       Tokenizer
 }
 
-func NewService(usersRepo UsersRepository, preferencesRepo PreferencesRepository, followingRepo FollowingRepository, feedRepo FeedRepository) Service {
+func NewService(usersRepo UsersRepository, preferencesRepo PreferencesRepository, followingRepo FollowingRepository, feedRepo FeedRepository, tokenizer Tokenizer) Service {
 	return &service{
 		usersRepo:       usersRepo,
 		preferencesRepo: preferencesRepo,
 		followingRepo:   followingRepo,
 		feedRepo:        feedRepo,
+		tokenizer:       tokenizer,
 	}
+}
+
+func (s *service) IssueToken(ctx context.Context, user User) (string, error) {
+	user, err := s.usersRepo.RetrieveByEmail(ctx, user.Email)
+	if err != nil {
+		return "", err
+	}
+	if err := ComparePassword(user.Password, user.Password); err != nil {
+		return "", err
+	}
+
+	return s.tokenizer.Issue(user.ID)
+}
+
+func (s *service) RefreshToken(ctx context.Context, token string) (string, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return "", err
+	}
+	if _, err := s.usersRepo.RetrieveByID(ctx, userID); err != nil {
+		return "", err
+	}
+
+	return s.tokenizer.Issue(userID)
 }
 
 func (s *service) CreateUser(ctx context.Context, user User) (User, error) {
@@ -59,23 +84,51 @@ func (s *service) CreateUser(ctx context.Context, user User) (User, error) {
 	return s.usersRepo.Create(ctx, user)
 }
 
-func (s *service) GetUserByID(ctx context.Context, id string) (User, error) {
+func (s *service) GetUserByID(ctx context.Context, token string, id string) (User, error) {
+	if _, err := s.tokenizer.Validate(token); err != nil {
+		return User{}, err
+	}
+
 	return s.usersRepo.RetrieveByID(ctx, id)
 }
 
-func (s *service) GetUsers(ctx context.Context, page Page) (UsersPage, error) {
+func (s *service) GetUsers(ctx context.Context, token string, page Page) (UsersPage, error) {
+	if _, err := s.tokenizer.Validate(token); err != nil {
+		return UsersPage{}, err
+	}
+
 	return s.usersRepo.RetrieveAll(ctx, page)
 }
 
-func (s *service) UpdateUser(ctx context.Context, user User) (User, error) {
+func (s *service) UpdateUser(ctx context.Context, token string, user User) (User, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return User{}, err
+	}
+	user.ID = userID
+
 	return s.usersRepo.Update(ctx, user)
 }
 
-func (s *service) UpdateUserUsername(ctx context.Context, user User) (User, error) {
+func (s *service) UpdateUserUsername(ctx context.Context, token string, user User) (User, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return User{}, err
+	}
+	user.ID = userID
+
 	return s.usersRepo.UpdateUsername(ctx, user)
 }
 
-func (s *service) UpdateUserPassword(ctx context.Context, id, oldPassword, currentPassowrd string) (User, error) {
+func (s *service) UpdateUserPassword(ctx context.Context, token string, id, oldPassword, currentPassowrd string) (User, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return User{}, err
+	}
+	if userID != id {
+		return User{}, errors.New("unauthorized")
+	}
+
 	user, err := s.usersRepo.RetrieveByID(ctx, id)
 	if err != nil {
 		return User{}, err
@@ -92,70 +145,179 @@ func (s *service) UpdateUserPassword(ctx context.Context, id, oldPassword, curre
 	return s.usersRepo.UpdatePassword(ctx, user)
 }
 
-func (s *service) UpdateUserEmail(ctx context.Context, user User) (User, error) {
+func (s *service) UpdateUserEmail(ctx context.Context, token string, user User) (User, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return User{}, err
+	}
+	user.ID = userID
+
 	return s.usersRepo.UpdateEmail(ctx, user)
 }
 
-func (s *service) UpdateUserBio(ctx context.Context, user User) (User, error) {
+func (s *service) UpdateUserBio(ctx context.Context, token string, user User) (User, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return User{}, err
+	}
+	user.ID = userID
+
 	return s.usersRepo.UpdateBio(ctx, user)
 }
 
-func (s *service) UpdateUserPictureURL(ctx context.Context, user User) (User, error) {
+func (s *service) UpdateUserPictureURL(ctx context.Context, token string, user User) (User, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return User{}, err
+	}
+	user.ID = userID
+
 	return s.usersRepo.UpdatePictureURL(ctx, user)
 }
 
-func (s *service) UpdateUserPreferences(ctx context.Context, user User) (User, error) {
+func (s *service) UpdateUserPreferences(ctx context.Context, token string, user User) (User, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return User{}, err
+	}
+	user.ID = userID
+
 	return s.usersRepo.UpdatePreferences(ctx, user)
 }
 
-func (s *service) DeleteUser(ctx context.Context, id string) error {
+func (s *service) DeleteUser(ctx context.Context, token string, id string) error {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return err
+	}
+	if userID != id {
+		return errors.New("unauthorized")
+	}
+
 	return s.usersRepo.Delete(ctx, id)
 }
 
-func (s *service) CreatePreferences(ctx context.Context, preference Preference) (Preference, error) {
+func (s *service) CreatePreferences(ctx context.Context, token string, preference Preference) (Preference, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return Preference{}, err
+	}
+	preference.UserID = userID
+
 	return s.preferencesRepo.Create(ctx, preference)
 }
 
-func (s *service) GetPreferencesByUserID(ctx context.Context, userID string) (Preference, error) {
+func (s *service) GetPreferencesByUserID(ctx context.Context, token string) (Preference, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return Preference{}, err
+	}
+
 	return s.preferencesRepo.RetrieveByUserID(ctx, userID)
 }
 
-func (s *service) GetPreferences(ctx context.Context, page Page) (PreferencesPage, error) {
+func (s *service) GetPreferences(ctx context.Context, token string, page Page) (PreferencesPage, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return PreferencesPage{}, err
+	}
+	page.UserID = userID
+
 	return s.preferencesRepo.RetrieveAll(ctx, page)
 }
 
-func (s *service) UpdatePreferences(ctx context.Context, preference Preference) (Preference, error) {
+func (s *service) UpdatePreferences(ctx context.Context, token string, preference Preference) (Preference, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return Preference{}, err
+	}
+	preference.UserID = userID
+
 	return s.preferencesRepo.Update(ctx, preference)
 }
 
-func (s *service) UpdateEmailPreferences(ctx context.Context, preference Preference) (Preference, error) {
+func (s *service) UpdateEmailPreferences(ctx context.Context, token string, preference Preference) (Preference, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return Preference{}, err
+	}
+	preference.UserID = userID
+
 	return s.preferencesRepo.UpdateEmail(ctx, preference)
 }
 
-func (s *service) UpdatePushPreferences(ctx context.Context, preference Preference) (Preference, error) {
+func (s *service) UpdatePushPreferences(ctx context.Context, token string, preference Preference) (Preference, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return Preference{}, err
+	}
+	preference.UserID = userID
+
 	return s.preferencesRepo.UpdatePush(ctx, preference)
 }
 
-func (s *service) DeletePreferences(ctx context.Context, userID string) error {
+func (s *service) DeletePreferences(ctx context.Context, token string) error {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return err
+	}
+
 	return s.preferencesRepo.Delete(ctx, userID)
 }
 
-func (s *service) CreateFollower(ctx context.Context, following Following) (Following, error) {
+func (s *service) CreateFollower(ctx context.Context, token string, following Following) (Following, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return Following{}, err
+	}
+	following.FollowerID = userID
+
 	return s.followingRepo.Create(ctx, following)
 }
 
-func (s *service) GetUserFollowings(ctx context.Context, page Page) (FollowingsPage, error) {
+func (s *service) GetUserFollowings(ctx context.Context, token string, page Page) (FollowingsPage, error) {
+	if _, err := s.tokenizer.Validate(token); err != nil {
+		return FollowingsPage{}, err
+	}
+
 	return s.followingRepo.RetrieveAll(ctx, page)
 }
 
-func (s *service) DeleteFollower(ctx context.Context, following Following) error {
+func (s *service) DeleteFollower(ctx context.Context, token string, following Following) error {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return err
+	}
+	following.FollowerID = userID
+
 	return s.followingRepo.Delete(ctx, following)
 }
 
-func (s *service) CreateFeed(ctx context.Context, feed Feed) error {
+func (s *service) CreateFeed(ctx context.Context, token string, feed Feed) error {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return err
+	}
+	feed.UserID = userID
+
 	return s.feedRepo.Create(ctx, feed)
 }
 
-func (s *service) GetUserFeed(ctx context.Context, page Page) (FeedPage, error) {
+func (s *service) GetUserFeed(ctx context.Context, token string, page Page) (FeedPage, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return FeedPage{}, err
+	}
+	page.UserID = userID
+
 	return s.feedRepo.RetrieveAll(ctx, page)
+}
+
+func (s *service) IdentifyUser(ctx context.Context, token string) (string, error) {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return "", err
+	}
+
+	return userID, nil
 }

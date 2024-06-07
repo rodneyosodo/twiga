@@ -148,6 +148,65 @@ func TestRetrieveUserByID(t *testing.T) {
 	}
 }
 
+func TestRetrieveUserByEmail(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM users")
+		require.NoError(t, err)
+	})
+	repo := repository.NewUsersRepository(db)
+
+	user := users.User{
+		Username:    namegen.Generate(),
+		DisplayName: namegen.Generate(),
+		Bio:         strings.Repeat("a", 100),
+		PictureURL:  "https://example.com" + namegen.Generate(),
+		Email:       namegen.Generate() + "@example.com",
+		Password:    "password",
+		Preferences: []string{"test"},
+	}
+	saved, err := repo.Create(context.Background(), user)
+	if err != nil {
+		t.Fatalf("failed to create user: %v", err)
+	}
+
+	cases := []struct {
+		desc  string
+		email string
+		user  users.User
+		err   error
+	}{
+		{
+			desc:  "valid user",
+			email: saved.Email,
+			user:  saved,
+			err:   nil,
+		},
+		{
+			desc:  "invalid user",
+			email: namegen.Generate() + "@example.com",
+			user:  users.User{},
+			err:   errors.New("user not found"),
+		},
+		{
+			desc:  "malformed user",
+			email: malformedID,
+			user:  users.User{},
+			err:   errors.New("user not found"),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			user, err := repo.RetrieveByEmail(context.Background(), tc.email)
+			if err != nil {
+				assert.ErrorContains(t, err, tc.err.Error())
+			}
+			tc.user.Password = user.Password
+			assert.Equal(t, tc.user, user)
+		})
+	}
+}
+
 func TestRetrieveAllUsers(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM users")
@@ -451,6 +510,8 @@ func TestUpdatePassword(t *testing.T) {
 			user, err := repo.UpdatePassword(context.Background(), tc.user)
 			switch {
 			case err == nil:
+				user, err := repo.RetrieveByEmail(context.Background(), saved.Email)
+				require.NoError(t, err)
 				assert.Equal(t, tc.user.Password, user.Password)
 			default:
 				assert.Empty(t, user)

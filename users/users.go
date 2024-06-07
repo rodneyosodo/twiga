@@ -153,6 +153,7 @@ func (page FeedPage) MarshalJSON() ([]byte, error) {
 type UsersRepository interface { //nolint:interfacebloat
 	Create(ctx context.Context, user User) (User, error)
 	RetrieveByID(ctx context.Context, id string) (User, error)
+	RetrieveByEmail(ctx context.Context, email string) (User, error)
 	RetrieveAll(ctx context.Context, page Page) (UsersPage, error)
 	Update(ctx context.Context, user User) (User, error)
 	UpdateUsername(ctx context.Context, user User) (User, error)
@@ -190,30 +191,34 @@ type FeedRepository interface {
 
 //go:generate mockery --name Service --output=./mocks --filename service.go --quiet
 type Service interface { //nolint:interfacebloat
+	IssueToken(ctx context.Context, user User) (string, error)
+	RefreshToken(ctx context.Context, token string) (string, error)
+	IdentifyUser(ctx context.Context, token string) (string, error)
+
 	CreateUser(ctx context.Context, user User) (User, error)
-	GetUserByID(ctx context.Context, id string) (User, error)
-	GetUsers(ctx context.Context, page Page) (UsersPage, error)
-	UpdateUser(ctx context.Context, user User) (User, error)
-	UpdateUserUsername(ctx context.Context, user User) (User, error)
-	UpdateUserPassword(ctx context.Context, id, oldPassword, currentPassowrd string) (User, error)
-	UpdateUserEmail(ctx context.Context, user User) (User, error)
-	UpdateUserBio(ctx context.Context, user User) (User, error)
-	UpdateUserPictureURL(ctx context.Context, user User) (User, error)
-	UpdateUserPreferences(ctx context.Context, user User) (User, error)
-	DeleteUser(ctx context.Context, id string) error
+	GetUserByID(ctx context.Context, token string, id string) (User, error)
+	GetUsers(ctx context.Context, token string, page Page) (UsersPage, error)
+	UpdateUser(ctx context.Context, token string, user User) (User, error)
+	UpdateUserUsername(ctx context.Context, token string, user User) (User, error)
+	UpdateUserPassword(ctx context.Context, token string, id, oldPassword, currentPassowrd string) (User, error)
+	UpdateUserEmail(ctx context.Context, token string, user User) (User, error)
+	UpdateUserBio(ctx context.Context, token string, user User) (User, error)
+	UpdateUserPictureURL(ctx context.Context, token string, user User) (User, error)
+	UpdateUserPreferences(ctx context.Context, token string, user User) (User, error)
+	DeleteUser(ctx context.Context, token string, id string) error
 
-	CreatePreferences(ctx context.Context, preference Preference) (Preference, error)
-	GetPreferencesByUserID(ctx context.Context, userID string) (Preference, error)
-	GetPreferences(ctx context.Context, page Page) (PreferencesPage, error)
-	UpdatePreferences(ctx context.Context, preference Preference) (Preference, error)
-	UpdateEmailPreferences(ctx context.Context, preference Preference) (Preference, error)
-	UpdatePushPreferences(ctx context.Context, preference Preference) (Preference, error)
-	DeletePreferences(ctx context.Context, userID string) error
+	CreatePreferences(ctx context.Context, token string, preference Preference) (Preference, error)
+	GetPreferencesByUserID(ctx context.Context, token string) (Preference, error)
+	GetPreferences(ctx context.Context, token string, page Page) (PreferencesPage, error)
+	UpdatePreferences(ctx context.Context, token string, preference Preference) (Preference, error)
+	UpdateEmailPreferences(ctx context.Context, token string, preference Preference) (Preference, error)
+	UpdatePushPreferences(ctx context.Context, token string, preference Preference) (Preference, error)
+	DeletePreferences(ctx context.Context, token string) error
 
-	CreateFollower(ctx context.Context, following Following) (Following, error)
-	GetUserFollowings(ctx context.Context, page Page) (FollowingsPage, error)
-	DeleteFollower(ctx context.Context, following Following) error
+	CreateFollower(ctx context.Context, token string, following Following) (Following, error)
+	GetUserFollowings(ctx context.Context, token string, page Page) (FollowingsPage, error)
+	DeleteFollower(ctx context.Context, token string, following Following) error
 
-	CreateFeed(ctx context.Context, feed Feed) error
-	GetUserFeed(ctx context.Context, page Page) (FeedPage, error)
+	CreateFeed(ctx context.Context, token string, feed Feed) error
+	GetUserFeed(ctx context.Context, token string, page Page) (FeedPage, error)
 }

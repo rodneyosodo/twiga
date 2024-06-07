@@ -9,12 +9,15 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/jackc/pgtype"
 	"github.com/rodneyosodo/twiga/internal/postgres"
 	"github.com/rodneyosodo/twiga/users"
 )
+
+const defReturnCols = "id, username, display_name, bio, picture_url, email, preferences, created_at, updated_at"
 
 var _ users.UsersRepository = (*uRepository)(nil)
 
@@ -27,9 +30,9 @@ func NewUsersRepository(db postgres.Database) *uRepository {
 }
 
 func (r *uRepository) Create(ctx context.Context, user users.User) (users.User, error) {
-	query := `INSERT INTO users (username, display_name, bio, picture_url, email, password, preferences)
+	query := fmt.Sprintf(`INSERT INTO users (username, display_name, bio, picture_url, email, password, preferences)
 			VALUES (:username, :display_name, :bio, :picture_url, :email, :password, :preferences)
-			RETURNING *`
+			RETURNING %s`, defReturnCols)
 	dUser, err := toDBUser(user)
 	if err != nil {
 		return users.User{}, err
@@ -52,7 +55,7 @@ func (r *uRepository) Create(ctx context.Context, user users.User) (users.User, 
 }
 
 func (r *uRepository) RetrieveByID(ctx context.Context, id string) (users.User, error) {
-	query := `SELECT * FROM users WHERE id = :id`
+	query := fmt.Sprintf(`SELECT %s FROM users WHERE id = :id`, defReturnCols)
 	dUser := dbUser{
 		ID: id,
 	}
@@ -75,8 +78,32 @@ func (r *uRepository) RetrieveByID(ctx context.Context, id string) (users.User, 
 	return users.User{}, errors.New("user not found")
 }
 
+func (r *uRepository) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
+	query := `SELECT * FROM users WHERE email = :email`
+	dUser := dbUser{
+		Email: email,
+	}
+
+	rows, err := r.NamedQueryContext(ctx, query, dUser)
+	if err != nil {
+		return users.User{}, err
+	}
+	defer rows.Close()
+
+	if rows.Next() {
+		var dUser dbUser
+		if err := rows.StructScan(&dUser); err != nil {
+			return users.User{}, err
+		}
+
+		return fromDBUser(dUser), nil
+	}
+
+	return users.User{}, errors.New("user not found")
+}
+
 func (r *uRepository) RetrieveAll(ctx context.Context, page users.Page) (users.UsersPage, error) {
-	query := `SELECT * FROM users ORDER BY created_at DESC LIMIT :limit OFFSET :offset`
+	query := fmt.Sprintf(`SELECT %s FROM users ORDER BY created_at DESC LIMIT :limit OFFSET :offset`, defReturnCols)
 	dPage := users.UsersPage{
 		Page: page,
 	}
@@ -115,57 +142,57 @@ func (r *uRepository) RetrieveAll(ctx context.Context, page users.Page) (users.U
 }
 
 func (r *uRepository) Update(ctx context.Context, user users.User) (users.User, error) {
-	query := `UPDATE users SET username = :username, display_name = :display_name, bio = :bio, picture_url = :picture_url, email = :email, preferences = :preferences, updated_at = CURRENT_TIMESTAMP
+	query := fmt.Sprintf(`UPDATE users SET username = :username, display_name = :display_name, bio = :bio, picture_url = :picture_url, email = :email, preferences = :preferences, updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id
-			RETURNING *`
+			RETURNING %s`, defReturnCols)
 
 	return r.update(ctx, query, user)
 }
 
 func (r *uRepository) UpdateUsername(ctx context.Context, user users.User) (users.User, error) {
-	query := `UPDATE users SET username = :username, updated_at = CURRENT_TIMESTAMP
+	query := fmt.Sprintf(`UPDATE users SET username = :username, updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id
-			RETURNING *`
+			RETURNING %s`, defReturnCols)
 
 	return r.update(ctx, query, user)
 }
 
 func (r *uRepository) UpdatePassword(ctx context.Context, user users.User) (users.User, error) {
-	query := `UPDATE users SET password = :password, updated_at = CURRENT_TIMESTAMP
+	query := fmt.Sprintf(`UPDATE users SET password = :password, updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id
-			RETURNING *`
+			RETURNING %s`, defReturnCols)
 
 	return r.update(ctx, query, user)
 }
 
 func (r *uRepository) UpdateEmail(ctx context.Context, user users.User) (users.User, error) {
-	query := `UPDATE users SET email = :email, updated_at = CURRENT_TIMESTAMP
+	query := fmt.Sprintf(`UPDATE users SET email = :email, updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id
-			RETURNING *`
+			RETURNING %s`, defReturnCols)
 
 	return r.update(ctx, query, user)
 }
 
 func (r *uRepository) UpdateBio(ctx context.Context, user users.User) (users.User, error) {
-	query := `UPDATE users SET bio = :bio, updated_at = CURRENT_TIMESTAMP
+	query := fmt.Sprintf(`UPDATE users SET bio = :bio, updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id
-			RETURNING *`
+			RETURNING %s`, defReturnCols)
 
 	return r.update(ctx, query, user)
 }
 
 func (r *uRepository) UpdatePictureURL(ctx context.Context, user users.User) (users.User, error) {
-	query := `UPDATE users SET picture_url = :picture_url, updated_at = CURRENT_TIMESTAMP
+	query := fmt.Sprintf(`UPDATE users SET picture_url = :picture_url, updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id
-			RETURNING *`
+			RETURNING %s`, defReturnCols)
 
 	return r.update(ctx, query, user)
 }
 
 func (r *uRepository) UpdatePreferences(ctx context.Context, user users.User) (users.User, error) {
-	query := `UPDATE users SET preferences = :preferences, updated_at = CURRENT_TIMESTAMP
+	query := fmt.Sprintf(`UPDATE users SET preferences = :preferences, updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id
-			RETURNING preferences`
+			RETURNING %s`, defReturnCols)
 
 	return r.update(ctx, query, user)
 }

@@ -88,6 +88,34 @@ func (_m *UsersRepository) RetrieveAll(ctx context.Context, page users.Page) (us
 	return r0, r1
 }
 
+// RetrieveByEmail provides a mock function with given fields: ctx, email
+func (_m *UsersRepository) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
+	ret := _m.Called(ctx, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveByEmail")
+	}
+
+	var r0 users.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (users.User, error)); ok {
+		return rf(ctx, email)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) users.User); ok {
+		r0 = rf(ctx, email)
+	} else {
+		r0 = ret.Get(0).(users.User)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, email)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RetrieveByID provides a mock function with given fields: ctx, id
 func (_m *UsersRepository) RetrieveByID(ctx context.Context, id string) (users.User, error) {
 	ret := _m.Called(ctx, id)

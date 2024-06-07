@@ -14,17 +14,17 @@ type Service struct {
 	mock.Mock
 }
 
-// CreateFeed provides a mock function with given fields: ctx, feed
-func (_m *Service) CreateFeed(ctx context.Context, feed users.Feed) error {
-	ret := _m.Called(ctx, feed)
+// CreateFeed provides a mock function with given fields: ctx, token, feed
+func (_m *Service) CreateFeed(ctx context.Context, token string, feed users.Feed) error {
+	ret := _m.Called(ctx, token, feed)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateFeed")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Feed) error); ok {
-		r0 = rf(ctx, feed)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Feed) error); ok {
+		r0 = rf(ctx, token, feed)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -32,9 +32,9 @@ func (_m *Service) CreateFeed(ctx context.Context, feed users.Feed) error {
 	return r0
 }
 
-// CreateFollower provides a mock function with given fields: ctx, following
-func (_m *Service) CreateFollower(ctx context.Context, following users.Following) (users.Following, error) {
-	ret := _m.Called(ctx, following)
+// CreateFollower provides a mock function with given fields: ctx, token, following
+func (_m *Service) CreateFollower(ctx context.Context, token string, following users.Following) (users.Following, error) {
+	ret := _m.Called(ctx, token, following)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateFollower")
@@ -42,17 +42,17 @@ func (_m *Service) CreateFollower(ctx context.Context, following users.Following
 
 	var r0 users.Following
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Following) (users.Following, error)); ok {
-		return rf(ctx, following)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Following) (users.Following, error)); ok {
+		return rf(ctx, token, following)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.Following) users.Following); ok {
-		r0 = rf(ctx, following)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Following) users.Following); ok {
+		r0 = rf(ctx, token, following)
 	} else {
 		r0 = ret.Get(0).(users.Following)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.Following) error); ok {
-		r1 = rf(ctx, following)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.Following) error); ok {
+		r1 = rf(ctx, token, following)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -60,9 +60,9 @@ func (_m *Service) CreateFollower(ctx context.Context, following users.Following
 	return r0, r1
 }
 
-// CreatePreferences provides a mock function with given fields: ctx, preference
-func (_m *Service) CreatePreferences(ctx context.Context, preference users.Preference) (users.Preference, error) {
-	ret := _m.Called(ctx, preference)
+// CreatePreferences provides a mock function with given fields: ctx, token, preference
+func (_m *Service) CreatePreferences(ctx context.Context, token string, preference users.Preference) (users.Preference, error) {
+	ret := _m.Called(ctx, token, preference)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreatePreferences")
@@ -70,17 +70,17 @@ func (_m *Service) CreatePreferences(ctx context.Context, preference users.Prefe
 
 	var r0 users.Preference
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Preference) (users.Preference, error)); ok {
-		return rf(ctx, preference)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Preference) (users.Preference, error)); ok {
+		return rf(ctx, token, preference)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.Preference) users.Preference); ok {
-		r0 = rf(ctx, preference)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Preference) users.Preference); ok {
+		r0 = rf(ctx, token, preference)
 	} else {
 		r0 = ret.Get(0).(users.Preference)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.Preference) error); ok {
-		r1 = rf(ctx, preference)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.Preference) error); ok {
+		r1 = rf(ctx, token, preference)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -116,17 +116,17 @@ func (_m *Service) CreateUser(ctx context.Context, user users.User) (users.User,
 	return r0, r1
 }
 
-// DeleteFollower provides a mock function with given fields: ctx, following
-func (_m *Service) DeleteFollower(ctx context.Context, following users.Following) error {
-	ret := _m.Called(ctx, following)
+// DeleteFollower provides a mock function with given fields: ctx, token, following
+func (_m *Service) DeleteFollower(ctx context.Context, token string, following users.Following) error {
+	ret := _m.Called(ctx, token, following)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteFollower")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Following) error); ok {
-		r0 = rf(ctx, following)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Following) error); ok {
+		r0 = rf(ctx, token, following)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -134,9 +134,9 @@ func (_m *Service) DeleteFollower(ctx context.Context, following users.Following
 	return r0
 }
 
-// DeletePreferences provides a mock function with given fields: ctx, userID
-func (_m *Service) DeletePreferences(ctx context.Context, userID string) error {
-	ret := _m.Called(ctx, userID)
+// DeletePreferences provides a mock function with given fields: ctx, token
+func (_m *Service) DeletePreferences(ctx context.Context, token string) error {
+	ret := _m.Called(ctx, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeletePreferences")
@@ -144,7 +144,7 @@ func (_m *Service) DeletePreferences(ctx context.Context, userID string) error {
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, userID)
+		r0 = rf(ctx, token)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -152,17 +152,17 @@ func (_m *Service) DeletePreferences(ctx context.Context, userID string) error {
 	return r0
 }
 
-// DeleteUser provides a mock function with given fields: ctx, id
-func (_m *Service) DeleteUser(ctx context.Context, id string) error {
-	ret := _m.Called(ctx, id)
+// DeleteUser provides a mock function with given fields: ctx, token, id
+func (_m *Service) DeleteUser(ctx context.Context, token string, id string) error {
+	ret := _m.Called(ctx, token, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteUser")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, token, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -170,9 +170,9 @@ func (_m *Service) DeleteUser(ctx context.Context, id string) error {
 	return r0
 }
 
-// GetPreferences provides a mock function with given fields: ctx, page
-func (_m *Service) GetPreferences(ctx context.Context, page users.Page) (users.PreferencesPage, error) {
-	ret := _m.Called(ctx, page)
+// GetPreferences provides a mock function with given fields: ctx, token, page
+func (_m *Service) GetPreferences(ctx context.Context, token string, page users.Page) (users.PreferencesPage, error) {
+	ret := _m.Called(ctx, token, page)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPreferences")
@@ -180,17 +180,17 @@ func (_m *Service) GetPreferences(ctx context.Context, page users.Page) (users.P
 
 	var r0 users.PreferencesPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Page) (users.PreferencesPage, error)); ok {
-		return rf(ctx, page)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Page) (users.PreferencesPage, error)); ok {
+		return rf(ctx, token, page)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.Page) users.PreferencesPage); ok {
-		r0 = rf(ctx, page)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Page) users.PreferencesPage); ok {
+		r0 = rf(ctx, token, page)
 	} else {
 		r0 = ret.Get(0).(users.PreferencesPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.Page) error); ok {
-		r1 = rf(ctx, page)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.Page) error); ok {
+		r1 = rf(ctx, token, page)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -198,9 +198,9 @@ func (_m *Service) GetPreferences(ctx context.Context, page users.Page) (users.P
 	return r0, r1
 }
 
-// GetPreferencesByUserID provides a mock function with given fields: ctx, userID
-func (_m *Service) GetPreferencesByUserID(ctx context.Context, userID string) (users.Preference, error) {
-	ret := _m.Called(ctx, userID)
+// GetPreferencesByUserID provides a mock function with given fields: ctx, token
+func (_m *Service) GetPreferencesByUserID(ctx context.Context, token string) (users.Preference, error) {
+	ret := _m.Called(ctx, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPreferencesByUserID")
@@ -209,16 +209,16 @@ func (_m *Service) GetPreferencesByUserID(ctx context.Context, userID string) (u
 	var r0 users.Preference
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, string) (users.Preference, error)); ok {
-		return rf(ctx, userID)
+		return rf(ctx, token)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, string) users.Preference); ok {
-		r0 = rf(ctx, userID)
+		r0 = rf(ctx, token)
 	} else {
 		r0 = ret.Get(0).(users.Preference)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, userID)
+		r1 = rf(ctx, token)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -226,9 +226,9 @@ func (_m *Service) GetPreferencesByUserID(ctx context.Context, userID string) (u
 	return r0, r1
 }
 
-// GetUserByID provides a mock function with given fields: ctx, id
-func (_m *Service) GetUserByID(ctx context.Context, id string) (users.User, error) {
-	ret := _m.Called(ctx, id)
+// GetUserByID provides a mock function with given fields: ctx, token, id
+func (_m *Service) GetUserByID(ctx context.Context, token string, id string) (users.User, error) {
+	ret := _m.Called(ctx, token, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserByID")
@@ -236,17 +236,17 @@ func (_m *Service) GetUserByID(ctx context.Context, id string) (users.User, erro
 
 	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (users.User, error)); ok {
-		return rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (users.User, error)); ok {
+		return rf(ctx, token, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) users.User); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) users.User); ok {
+		r0 = rf(ctx, token, id)
 	} else {
 		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, id)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, token, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -254,9 +254,9 @@ func (_m *Service) GetUserByID(ctx context.Context, id string) (users.User, erro
 	return r0, r1
 }
 
-// GetUserFeed provides a mock function with given fields: ctx, page
-func (_m *Service) GetUserFeed(ctx context.Context, page users.Page) (users.FeedPage, error) {
-	ret := _m.Called(ctx, page)
+// GetUserFeed provides a mock function with given fields: ctx, token, page
+func (_m *Service) GetUserFeed(ctx context.Context, token string, page users.Page) (users.FeedPage, error) {
+	ret := _m.Called(ctx, token, page)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserFeed")
@@ -264,17 +264,17 @@ func (_m *Service) GetUserFeed(ctx context.Context, page users.Page) (users.Feed
 
 	var r0 users.FeedPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Page) (users.FeedPage, error)); ok {
-		return rf(ctx, page)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Page) (users.FeedPage, error)); ok {
+		return rf(ctx, token, page)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.Page) users.FeedPage); ok {
-		r0 = rf(ctx, page)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Page) users.FeedPage); ok {
+		r0 = rf(ctx, token, page)
 	} else {
 		r0 = ret.Get(0).(users.FeedPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.Page) error); ok {
-		r1 = rf(ctx, page)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.Page) error); ok {
+		r1 = rf(ctx, token, page)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -282,9 +282,9 @@ func (_m *Service) GetUserFeed(ctx context.Context, page users.Page) (users.Feed
 	return r0, r1
 }
 
-// GetUserFollowings provides a mock function with given fields: ctx, page
-func (_m *Service) GetUserFollowings(ctx context.Context, page users.Page) (users.FollowingsPage, error) {
-	ret := _m.Called(ctx, page)
+// GetUserFollowings provides a mock function with given fields: ctx, token, page
+func (_m *Service) GetUserFollowings(ctx context.Context, token string, page users.Page) (users.FollowingsPage, error) {
+	ret := _m.Called(ctx, token, page)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUserFollowings")
@@ -292,17 +292,17 @@ func (_m *Service) GetUserFollowings(ctx context.Context, page users.Page) (user
 
 	var r0 users.FollowingsPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Page) (users.FollowingsPage, error)); ok {
-		return rf(ctx, page)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Page) (users.FollowingsPage, error)); ok {
+		return rf(ctx, token, page)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.Page) users.FollowingsPage); ok {
-		r0 = rf(ctx, page)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Page) users.FollowingsPage); ok {
+		r0 = rf(ctx, token, page)
 	} else {
 		r0 = ret.Get(0).(users.FollowingsPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.Page) error); ok {
-		r1 = rf(ctx, page)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.Page) error); ok {
+		r1 = rf(ctx, token, page)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -310,9 +310,9 @@ func (_m *Service) GetUserFollowings(ctx context.Context, page users.Page) (user
 	return r0, r1
 }
 
-// GetUsers provides a mock function with given fields: ctx, page
-func (_m *Service) GetUsers(ctx context.Context, page users.Page) (users.UsersPage, error) {
-	ret := _m.Called(ctx, page)
+// GetUsers provides a mock function with given fields: ctx, token, page
+func (_m *Service) GetUsers(ctx context.Context, token string, page users.Page) (users.UsersPage, error) {
+	ret := _m.Called(ctx, token, page)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUsers")
@@ -320,17 +320,17 @@ func (_m *Service) GetUsers(ctx context.Context, page users.Page) (users.UsersPa
 
 	var r0 users.UsersPage
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Page) (users.UsersPage, error)); ok {
-		return rf(ctx, page)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Page) (users.UsersPage, error)); ok {
+		return rf(ctx, token, page)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.Page) users.UsersPage); ok {
-		r0 = rf(ctx, page)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Page) users.UsersPage); ok {
+		r0 = rf(ctx, token, page)
 	} else {
 		r0 = ret.Get(0).(users.UsersPage)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.Page) error); ok {
-		r1 = rf(ctx, page)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.Page) error); ok {
+		r1 = rf(ctx, token, page)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -338,9 +338,93 @@ func (_m *Service) GetUsers(ctx context.Context, page users.Page) (users.UsersPa
 	return r0, r1
 }
 
-// UpdateEmailPreferences provides a mock function with given fields: ctx, preference
-func (_m *Service) UpdateEmailPreferences(ctx context.Context, preference users.Preference) (users.Preference, error) {
-	ret := _m.Called(ctx, preference)
+// IdentifyUser provides a mock function with given fields: ctx, token
+func (_m *Service) IdentifyUser(ctx context.Context, token string) (string, error) {
+	ret := _m.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IdentifyUser")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
+		return rf(ctx, token)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
+		r0 = rf(ctx, token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// IssueToken provides a mock function with given fields: ctx, user
+func (_m *Service) IssueToken(ctx context.Context, user users.User) (string, error) {
+	ret := _m.Called(ctx, user)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IssueToken")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) (string, error)); ok {
+		return rf(ctx, user)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) string); ok {
+		r0 = rf(ctx, user)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
+		r1 = rf(ctx, user)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// RefreshToken provides a mock function with given fields: ctx, token
+func (_m *Service) RefreshToken(ctx context.Context, token string) (string, error) {
+	ret := _m.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RefreshToken")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
+		return rf(ctx, token)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
+		r0 = rf(ctx, token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateEmailPreferences provides a mock function with given fields: ctx, token, preference
+func (_m *Service) UpdateEmailPreferences(ctx context.Context, token string, preference users.Preference) (users.Preference, error) {
+	ret := _m.Called(ctx, token, preference)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateEmailPreferences")
@@ -348,17 +432,17 @@ func (_m *Service) UpdateEmailPreferences(ctx context.Context, preference users.
 
 	var r0 users.Preference
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Preference) (users.Preference, error)); ok {
-		return rf(ctx, preference)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Preference) (users.Preference, error)); ok {
+		return rf(ctx, token, preference)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.Preference) users.Preference); ok {
-		r0 = rf(ctx, preference)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Preference) users.Preference); ok {
+		r0 = rf(ctx, token, preference)
 	} else {
 		r0 = ret.Get(0).(users.Preference)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.Preference) error); ok {
-		r1 = rf(ctx, preference)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.Preference) error); ok {
+		r1 = rf(ctx, token, preference)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -366,9 +450,9 @@ func (_m *Service) UpdateEmailPreferences(ctx context.Context, preference users.
 	return r0, r1
 }
 
-// UpdatePreferences provides a mock function with given fields: ctx, preference
-func (_m *Service) UpdatePreferences(ctx context.Context, preference users.Preference) (users.Preference, error) {
-	ret := _m.Called(ctx, preference)
+// UpdatePreferences provides a mock function with given fields: ctx, token, preference
+func (_m *Service) UpdatePreferences(ctx context.Context, token string, preference users.Preference) (users.Preference, error) {
+	ret := _m.Called(ctx, token, preference)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdatePreferences")
@@ -376,17 +460,17 @@ func (_m *Service) UpdatePreferences(ctx context.Context, preference users.Prefe
 
 	var r0 users.Preference
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Preference) (users.Preference, error)); ok {
-		return rf(ctx, preference)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Preference) (users.Preference, error)); ok {
+		return rf(ctx, token, preference)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.Preference) users.Preference); ok {
-		r0 = rf(ctx, preference)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Preference) users.Preference); ok {
+		r0 = rf(ctx, token, preference)
 	} else {
 		r0 = ret.Get(0).(users.Preference)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.Preference) error); ok {
-		r1 = rf(ctx, preference)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.Preference) error); ok {
+		r1 = rf(ctx, token, preference)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -394,9 +478,9 @@ func (_m *Service) UpdatePreferences(ctx context.Context, preference users.Prefe
 	return r0, r1
 }
 
-// UpdatePushPreferences provides a mock function with given fields: ctx, preference
-func (_m *Service) UpdatePushPreferences(ctx context.Context, preference users.Preference) (users.Preference, error) {
-	ret := _m.Called(ctx, preference)
+// UpdatePushPreferences provides a mock function with given fields: ctx, token, preference
+func (_m *Service) UpdatePushPreferences(ctx context.Context, token string, preference users.Preference) (users.Preference, error) {
+	ret := _m.Called(ctx, token, preference)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdatePushPreferences")
@@ -404,17 +488,17 @@ func (_m *Service) UpdatePushPreferences(ctx context.Context, preference users.P
 
 	var r0 users.Preference
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.Preference) (users.Preference, error)); ok {
-		return rf(ctx, preference)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Preference) (users.Preference, error)); ok {
+		return rf(ctx, token, preference)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.Preference) users.Preference); ok {
-		r0 = rf(ctx, preference)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.Preference) users.Preference); ok {
+		r0 = rf(ctx, token, preference)
 	} else {
 		r0 = ret.Get(0).(users.Preference)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.Preference) error); ok {
-		r1 = rf(ctx, preference)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.Preference) error); ok {
+		r1 = rf(ctx, token, preference)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -422,9 +506,9 @@ func (_m *Service) UpdatePushPreferences(ctx context.Context, preference users.P
 	return r0, r1
 }
 
-// UpdateUser provides a mock function with given fields: ctx, user
-func (_m *Service) UpdateUser(ctx context.Context, user users.User) (users.User, error) {
-	ret := _m.Called(ctx, user)
+// UpdateUser provides a mock function with given fields: ctx, token, user
+func (_m *Service) UpdateUser(ctx context.Context, token string, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, token, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUser")
@@ -432,17 +516,17 @@ func (_m *Service) UpdateUser(ctx context.Context, user users.User) (users.User,
 
 	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) (users.User, error)); ok {
+		return rf(ctx, token, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
-		r0 = rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) users.User); ok {
+		r0 = rf(ctx, token, user)
 	} else {
 		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.User) error); ok {
+		r1 = rf(ctx, token, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -450,9 +534,9 @@ func (_m *Service) UpdateUser(ctx context.Context, user users.User) (users.User,
 	return r0, r1
 }
 
-// UpdateUserBio provides a mock function with given fields: ctx, user
-func (_m *Service) UpdateUserBio(ctx context.Context, user users.User) (users.User, error) {
-	ret := _m.Called(ctx, user)
+// UpdateUserBio provides a mock function with given fields: ctx, token, user
+func (_m *Service) UpdateUserBio(ctx context.Context, token string, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, token, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUserBio")
@@ -460,17 +544,17 @@ func (_m *Service) UpdateUserBio(ctx context.Context, user users.User) (users.Us
 
 	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) (users.User, error)); ok {
+		return rf(ctx, token, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
-		r0 = rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) users.User); ok {
+		r0 = rf(ctx, token, user)
 	} else {
 		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.User) error); ok {
+		r1 = rf(ctx, token, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -478,9 +562,9 @@ func (_m *Service) UpdateUserBio(ctx context.Context, user users.User) (users.Us
 	return r0, r1
 }
 
-// UpdateUserEmail provides a mock function with given fields: ctx, user
-func (_m *Service) UpdateUserEmail(ctx context.Context, user users.User) (users.User, error) {
-	ret := _m.Called(ctx, user)
+// UpdateUserEmail provides a mock function with given fields: ctx, token, user
+func (_m *Service) UpdateUserEmail(ctx context.Context, token string, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, token, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUserEmail")
@@ -488,17 +572,17 @@ func (_m *Service) UpdateUserEmail(ctx context.Context, user users.User) (users.
 
 	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) (users.User, error)); ok {
+		return rf(ctx, token, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
-		r0 = rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) users.User); ok {
+		r0 = rf(ctx, token, user)
 	} else {
 		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.User) error); ok {
+		r1 = rf(ctx, token, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -506,9 +590,9 @@ func (_m *Service) UpdateUserEmail(ctx context.Context, user users.User) (users.
 	return r0, r1
 }
 
-// UpdateUserPassword provides a mock function with given fields: ctx, id, oldPassword, currentPassowrd
-func (_m *Service) UpdateUserPassword(ctx context.Context, id string, oldPassword string, currentPassowrd string) (users.User, error) {
-	ret := _m.Called(ctx, id, oldPassword, currentPassowrd)
+// UpdateUserPassword provides a mock function with given fields: ctx, token, id, oldPassword, currentPassowrd
+func (_m *Service) UpdateUserPassword(ctx context.Context, token string, id string, oldPassword string, currentPassowrd string) (users.User, error) {
+	ret := _m.Called(ctx, token, id, oldPassword, currentPassowrd)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUserPassword")
@@ -516,17 +600,17 @@ func (_m *Service) UpdateUserPassword(ctx context.Context, id string, oldPasswor
 
 	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (users.User, error)); ok {
-		return rf(ctx, id, oldPassword, currentPassowrd)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (users.User, error)); ok {
+		return rf(ctx, token, id, oldPassword, currentPassowrd)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) users.User); ok {
-		r0 = rf(ctx, id, oldPassword, currentPassowrd)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) users.User); ok {
+		r0 = rf(ctx, token, id, oldPassword, currentPassowrd)
 	} else {
 		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, id, oldPassword, currentPassowrd)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, token, id, oldPassword, currentPassowrd)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -534,9 +618,9 @@ func (_m *Service) UpdateUserPassword(ctx context.Context, id string, oldPasswor
 	return r0, r1
 }
 
-// UpdateUserPictureURL provides a mock function with given fields: ctx, user
-func (_m *Service) UpdateUserPictureURL(ctx context.Context, user users.User) (users.User, error) {
-	ret := _m.Called(ctx, user)
+// UpdateUserPictureURL provides a mock function with given fields: ctx, token, user
+func (_m *Service) UpdateUserPictureURL(ctx context.Context, token string, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, token, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUserPictureURL")
@@ -544,17 +628,17 @@ func (_m *Service) UpdateUserPictureURL(ctx context.Context, user users.User) (u
 
 	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) (users.User, error)); ok {
+		return rf(ctx, token, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
-		r0 = rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) users.User); ok {
+		r0 = rf(ctx, token, user)
 	} else {
 		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.User) error); ok {
+		r1 = rf(ctx, token, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -562,9 +646,9 @@ func (_m *Service) UpdateUserPictureURL(ctx context.Context, user users.User) (u
 	return r0, r1
 }
 
-// UpdateUserPreferences provides a mock function with given fields: ctx, user
-func (_m *Service) UpdateUserPreferences(ctx context.Context, user users.User) (users.User, error) {
-	ret := _m.Called(ctx, user)
+// UpdateUserPreferences provides a mock function with given fields: ctx, token, user
+func (_m *Service) UpdateUserPreferences(ctx context.Context, token string, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, token, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUserPreferences")
@@ -572,17 +656,17 @@ func (_m *Service) UpdateUserPreferences(ctx context.Context, user users.User) (
 
 	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) (users.User, error)); ok {
+		return rf(ctx, token, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
-		r0 = rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) users.User); ok {
+		r0 = rf(ctx, token, user)
 	} else {
 		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.User) error); ok {
+		r1 = rf(ctx, token, user)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -590,9 +674,9 @@ func (_m *Service) UpdateUserPreferences(ctx context.Context, user users.User) (
 	return r0, r1
 }
 
-// UpdateUserUsername provides a mock function with given fields: ctx, user
-func (_m *Service) UpdateUserUsername(ctx context.Context, user users.User) (users.User, error) {
-	ret := _m.Called(ctx, user)
+// UpdateUserUsername provides a mock function with given fields: ctx, token, user
+func (_m *Service) UpdateUserUsername(ctx context.Context, token string, user users.User) (users.User, error) {
+	ret := _m.Called(ctx, token, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUserUsername")
@@ -600,17 +684,17 @@ func (_m *Service) UpdateUserUsername(ctx context.Context, user users.User) (use
 
 	var r0 users.User
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) (users.User, error)); ok {
+		return rf(ctx, token, user)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
-		r0 = rf(ctx, user)
+	if rf, ok := ret.Get(0).(func(context.Context, string, users.User) users.User); ok {
+		r0 = rf(ctx, token, user)
 	} else {
 		r0 = ret.Get(0).(users.User)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
+	if rf, ok := ret.Get(1).(func(context.Context, string, users.User) error); ok {
+		r1 = rf(ctx, token, user)
 	} else {
 		r1 = ret.Error(1)
 	}
