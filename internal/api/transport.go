@@ -13,10 +13,22 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 func ExtractToken(r *http.Request) string {
 	token := r.Header.Get("Authorization")
+
+	if strings.HasPrefix(token, "Bearer ") {
+		return strings.TrimPrefix(token, "Bearer ")
+	}
+
+	return token
+}
+
+func GinExtractToken(ctx *gin.Context) string {
+	token := ctx.GetHeader("Authorization")
 
 	if strings.HasPrefix(token, "Bearer ") {
 		return strings.TrimPrefix(token, "Bearer ")
