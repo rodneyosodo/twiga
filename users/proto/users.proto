@@ -1,0 +1,53 @@
+// Copyright (c) 2024 rodneyosodo
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at:
+// http://www.apache.org/licenses/LICENSE-2.0
+
+syntax = "proto3";
+
+package proto;
+option go_package = "./proto";
+
+service UsersService {
+  rpc GetUserByID(GetUserByIDRequest) returns (GetUserByIDResponse) {}
+  rpc GetUserPreferences(GetUserPreferencesRequest)
+      returns (GetUserPreferencesResponse) {}
+  rpc CreateFeed(CreateFeedRequest) returns (CreateFeedResponse) {}
+  rpc IdentifyUser(IdentifyUserRequest) returns (IdentifyUserResponse) {}
+}
+
+message GetUserByIDRequest { string id = 1; }
+
+message GetUserByIDResponse {
+  string id = 1;
+  string username = 2;
+  string display_name = 3;
+  string bio = 4;
+  string profile_picture = 5;
+  string created_at = 6;
+  string updated_at = 7;
+}
+
+message GetUserPreferencesRequest { string id = 1; }
+
+message GetUserPreferencesResponse {
+  bool email_notifications = 1;
+  bool push_notifications = 2;
+}
+
+message CreateFeedRequest {
+  string user_id = 1;
+  string post_id = 2;
+}
+
+message CreateFeedResponse {
+  string user_id = 1;
+  string post_id = 2;
+  string created_at = 3;
+}
+
+message IdentifyUserRequest { string token = 1; }
+
+message IdentifyUserResponse { string id = 1; }
