@@ -6,7 +6,7 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 
 DOCKER_IMAGE_NAME_PREFIX=ghcr.io/rodneyosodo/twiga
-SERVICES = users
+SERVICES = users posts
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 BUILD_DIR = build

@@ -10,6 +10,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -492,6 +493,7 @@ func (r *repository) DeleteShare(ctx context.Context, id string) error {
 }
 
 func getFilter(page posts.Page) (bson.D, *options.FindOptions) {
+	fmt.Printf("\n\n\n\n\npage: %+v\n\n\n\n\n", page)
 	filter := bson.D{}
 	opts := options.Find()
 
@@ -500,9 +502,8 @@ func getFilter(page posts.Page) (bson.D, *options.FindOptions) {
 	if page.Tag != "" {
 		filter = append(filter, bson.E{Key: "tags", Value: bson.D{{Key: "$all", Value: bson.A{page.Tag}}}})
 	}
-	if page.Visibility {
-		filter = append(filter, bson.E{Key: "visibility", Value: true})
-	}
+	filter = append(filter, bson.E{Key: "visibility", Value: page.Visibility})
+
 	if page.PostID != "" {
 		objID, err := primitive.ObjectIDFromHex(page.PostID)
 		if err != nil {

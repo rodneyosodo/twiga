@@ -40,16 +40,16 @@ const (
 	svcName       = "users"
 	defHTTPPort   = "6000"
 	defGRPCPort   = "6010"
-	envPrefixHTTP = "TWIGA_HTTP_"
-	envPrefixGRPC = "TWIGA_GRPC_"
-	envPrefixDB   = "TWIGA_DB_"
+	envPrefixHTTP = "TWIGA_USERS_HTTP_"
+	envPrefixGRPC = "TWIGA_USERS_GRPC_"
+	envPrefixDB   = "TWIGA_USERS_DB_"
 	defDB         = "users"
 )
 
 type config struct {
-	LogLevel   string        `env:"TWIGA_LOG_LEVEL"          envDefault:"info"`
-	JWTSecret  string        `env:"TWIGA_JWT_SECRET"         envDefault:"secret"`
-	JWTExp     time.Duration `env:"TWIGA_JWT_EXP"            envDefault:"24h"`
+	LogLevel   string        `env:"TWIGA_USERS_LOG_LEVEL"    envDefault:"info"`
+	JWTSecret  string        `env:"TWIGA_USERS_JWT_SECRET"   envDefault:"secret"`
+	JWTExp     time.Duration `env:"TWIGA_USERS_JWT_EXP"      envDefault:"24h"`
 	JaegerURL  url.URL       `env:"TWIGA_JAEGER_URL"         envDefault:"http://localhost:14268"`
 	TraceRatio float64       `env:"TWIGA_JAEGER_TRACE_RATIO" envDefault:"1.0"`
 }

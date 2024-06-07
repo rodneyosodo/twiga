@@ -98,7 +98,7 @@ type Post struct {
 	Content    string    `bson:"content"            json:"content"`
 	Tags       []string  `bson:"tags"               json:"tags"`
 	ImageURL   string    `bson:"image_url"          json:"image_url"`
-	Visibility *bool     `bson:"visibility"         json:"visibility"`
+	Visibility bool      `bson:"visibility"         json:"visibility"`
 	CreatedAt  time.Time `bson:"created_at"         json:"created_at"`
 	UpdatedAt  time.Time `bson:"updated_at"         json:"updated_at"`
 	UserID     string    `bson:"user_id"            json:"user_id"`
@@ -132,11 +132,11 @@ type Page struct {
 	Total      uint64 `db:"total"                json:"total"`
 	Offset     uint64 `db:"offset"               json:"offset"`
 	Limit      uint64 `db:"limit"                json:"limit"`
-	Tag        string `db:"tag,omitempty"        json:"tag"`
-	PostID     string `db:"post_id,omitempty"    json:"post_id"`
-	Visibility bool   `db:"visibility,omitempty" json:"visibility"`
-	UserID     string `db:"user_id,omitempty"    json:"user_id"`
-	CommentID  string `db:"comment_id,omitempty" json:"comment_id"`
+	Tag        string `db:"tag,omitempty"        json:"tag,omitempty"`
+	PostID     string `db:"post_id,omitempty"    json:"post_id,omitempty"`
+	Visibility bool   `db:"visibility,omitempty" json:"visibility,omitempty"`
+	UserID     string `db:"user_id,omitempty"    json:"user_id,omitempty"`
+	CommentID  string `db:"comment_id,omitempty" json:"comment_id,omitempty"`
 }
 
 type PostsPage struct {

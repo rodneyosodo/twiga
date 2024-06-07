@@ -53,6 +53,7 @@ func Endpoints(router *gin.Engine, svc posts.Service) {
 	router.GET("/posts/:id/shares", getShares(svc))
 	router.DELETE("/posts/:id/unshare", deleteShare(svc))
 
+	router.GET("/version", iapi.GinVersion("posts"))
 	router.GET("/metrics", ginprom.PromHandler(promhttp.Handler()))
 }
 
@@ -156,6 +157,7 @@ func getPosts(svc posts.Service) func(ctx *gin.Context) {
 			Limit:      limit,
 			Visibility: visibility,
 			UserID:     ctx.DefaultQuery("user_id", ""),
+			Tag:        ctx.DefaultQuery("tags", ""),
 		}
 
 		posts, err := svc.RetrieveAllPosts(ctx, token, page)
@@ -207,12 +209,6 @@ func updatePost(svc posts.Service, field entityfield) func(ctx *gin.Context) {
 			if post.ImageURL == "" {
 				ctx.JSON(http.StatusBadRequest, gin.H{
 					"error": "Image is required",
-				})
-			}
-		case visibilityField:
-			if post.Visibility == nil {
-				ctx.JSON(http.StatusBadRequest, gin.H{
-					"error": "Visibility is required",
 				})
 			}
 		}

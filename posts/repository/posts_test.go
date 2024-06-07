@@ -120,10 +120,9 @@ func TestRetrieveAll(t *testing.T) {
 
 	num := uint64(10)
 	saved := make([]posts.Post, num)
-	visible := true
 	for i := range num {
 		post := generatePost()
-		post.Visibility = &visible
+		post.Visibility = true
 		post, err := repo.Create(context.Background(), post)
 		assert.NoError(t, err)
 		saved[i] = post
@@ -248,8 +247,6 @@ func TestUpdate(t *testing.T) {
 	saved, err := repo.Create(context.Background(), generatePost())
 	assert.NoError(t, err)
 
-	visible := rand.Intn(2) == 0
-
 	cases := []struct {
 		desc string
 		post posts.Post
@@ -263,7 +260,7 @@ func TestUpdate(t *testing.T) {
 				Content:    strings.Repeat("b", 100),
 				Tags:       namegen.GenerateMultiple(3),
 				ImageURL:   "https://www.example.com/image.jpg",
-				Visibility: &visible,
+				Visibility: rand.Intn(2) == 0,
 			},
 			err: nil,
 		},
@@ -478,8 +475,6 @@ func TestUpdateVisibility(t *testing.T) {
 	saved, err := repo.Create(context.Background(), generatePost())
 	assert.NoError(t, err)
 
-	visible := rand.Intn(2) == 0
-
 	cases := []struct {
 		desc string
 		post posts.Post
@@ -489,7 +484,7 @@ func TestUpdateVisibility(t *testing.T) {
 			desc: "valid post",
 			post: posts.Post{
 				ID:         saved.ID,
-				Visibility: &visible,
+				Visibility: rand.Intn(2) == 0,
 			},
 			err: nil,
 		},
@@ -702,8 +697,7 @@ func TestRetrieveAllComments(t *testing.T) {
 	repo := repository.NewRepository(collection)
 
 	post := generatePost()
-	visible := true
-	post.Visibility = &visible
+	post.Visibility = true
 	post, err := repo.Create(context.Background(), post)
 	assert.NoError(t, err)
 
@@ -991,8 +985,7 @@ func TestRetrieveAllLikes(t *testing.T) {
 	repo := repository.NewRepository(collection)
 
 	post := generatePost()
-	visible := true
-	post.Visibility = &visible
+	post.Visibility = true
 	post, err := repo.Create(context.Background(), post)
 	assert.NoError(t, err)
 
@@ -1214,8 +1207,7 @@ func TestRetrieveAllShares(t *testing.T) {
 	repo := repository.NewRepository(collection)
 
 	post := generatePost()
-	visible := true
-	post.Visibility = &visible
+	post.Visibility = true
 	post, err := repo.Create(context.Background(), post)
 	assert.NoError(t, err)
 
@@ -1368,14 +1360,12 @@ func TestDeleteShare(t *testing.T) {
 }
 
 func generatePost() posts.Post {
-	visible := rand.Intn(2) == 0
-
 	return posts.Post{
 		Title:      namegen.Generate(),
 		Content:    strings.Repeat("a", 100),
 		Tags:       namegen.GenerateMultiple(3),
 		ImageURL:   "https://www.example.com/image.jpg",
-		Visibility: &visible,
+		Visibility: rand.Intn(2) == 0,
 		UserID:     uuid.Must(uuid.NewV4()).String(),
 	}
 }

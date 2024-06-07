@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"go.szostok.io/version"
 )
 
@@ -43,4 +44,24 @@ func Version(service string) http.HandlerFunc {
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	})
+}
+
+func GinVersion(service string) func(c *gin.Context) {
+	return func(c *gin.Context) {
+		info := version.Get()
+
+		res := map[string]string{
+			"service":     service,
+			"status":      "pass",
+			"version":     info.Version,
+			"commit":      info.GitCommit,
+			"commit_date": info.CommitDate,
+			"build_date":  info.BuildDate,
+			"go_version":  info.GoVersion,
+			"compiler":    info.Compiler,
+			"platform":    info.Platform,
+		}
+
+		c.JSON(http.StatusOK, res)
+	}
 }
