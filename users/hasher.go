@@ -21,6 +21,10 @@ var (
 )
 
 func HashPassword(pwd string) (string, error) {
+	if pwd == "" {
+		return "", errors.New("empty password")
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(pwd), cost)
 	if err != nil {
 		return "", errors.Join(errHashPassword, err)
@@ -30,6 +34,13 @@ func HashPassword(pwd string) (string, error) {
 }
 
 func ComparePassword(plain, hashed string) error {
+	if plain == "" {
+		return errors.New("empty password")
+	}
+	if hashed == "" {
+		return errors.New("empty hash")
+	}
+
 	if err := bcrypt.CompareHashAndPassword([]byte(hashed), []byte(plain)); err != nil {
 		return errors.Join(errComparePassword, err)
 	}
