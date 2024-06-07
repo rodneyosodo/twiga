@@ -1,0 +1,80 @@
+# Copyright (c) 2024 rodneyosodo
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at:
+# http://www.apache.org/licenses/LICENSE-2.0
+
+name: twiga
+
+networks:
+  twiga-base-network:
+    driver: bridge
+
+volumes:
+  twiga-users-db-volume:
+
+services:
+  twiga-users-db:
+    image: postgres:16.3-alpine
+    container_name: twiga-users-db
+    networks:
+      - twiga-base-network
+    volumes:
+      - twiga-users-db-volume:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${TWIGA_DB_USER}
+      POSTGRES_PASSWORD: ${TWIGA_DB_PASS}
+      POSTGRES_DB: ${TWIGA_DB_NAME}
+    restart: always
+
+  twiga-users:
+    image: ghcr.io/rodneyosodo/twiga/users:${TWIGA_RELEASE_TAG}
+    container_name: twiga-users
+    networks:
+      - twiga-base-network
+    depends_on:
+      - twiga-users-db
+    ports:
+      - ${TWIGA_HTTP_PORT}:${TWIGA_HTTP_PORT}
+      - ${TWIGA_GRPC_PORT}:${TWIGA_GRPC_PORT}
+    restart: on-failure
+    environment:
+      TWIGA_LOG_LEVEL: ${TWIGA_LOG_LEVEL}
+      TWIGA_JWT_SECRET: ${TWIGA_JWT_SECRET}
+      TWIGA_JWT_EXP: ${TWIGA_JWT_EXP}
+      TWIGA_JAEGER_URL: ${TWIGA_JAEGER_URL}
+      TWIGA_JAEGER_TRACE_RATIO: ${TWIGA_JAEGER_TRACE_RATIO}
+      TWIGA_HTTP_HOST: ${TWIGA_HTTP_HOST}
+      TWIGA_HTTP_PORT: ${TWIGA_HTTP_PORT}
+      TWIGA_HTTP_CERT_FILE: ${TWIGA_HTTP_CERT_FILE}
+      TWIGA_HTTP_KEY_FILE: ${TWIGA_HTTP_KEY_FILE}
+      TWIGA_HTTP_SERVER_CA_FILE: ${TWIGA_HTTP_SERVER_CA_FILE}
+      TWIGA_HTTP_CLIENT_CA_FILE: ${TWIGA_HTTP_CLIENT_CA_FILE}
+      TWIGA_GRPC_HOST: ${TWIGA_GRPC_HOST}
+      TWIGA_GRPC_PORT: ${TWIGA_GRPC_PORT}
+      TWIGA_GRPC_CERT_FILE: ${TWIGA_GRPC_CERT_FILE}
+      TWIGA_GRPC_KEY_FILE: ${TWIGA_GRPC_KEY_FILE}
+      TWIGA_GRPC_SERVER_CA_FILE: ${TWIGA_GRPC_SERVER_CA_FILE}
+      TWIGA_GRPC_CLIENT_CA_FILE: ${TWIGA_GRPC_CLIENT_CA_FILE}
+      TWIGA_DB_HOST: ${TWIGA_DB_HOST}
+      TWIGA_DB_PORT: ${TWIGA_DB_PORT}
+      TWIGA_DB_USER: ${TWIGA_DB_USER}
+      TWIGA_DB_PASS: ${TWIGA_DB_PASS}
+      TWIGA_DB_NAME: ${TWIGA_DB_NAME}
+      TWIGA_DB_SSL_MODE: ${TWIGA_DB_SSL_MODE}
+      TWIGA_DB_SSL_CERT: ${TWIGA_DB_SSL_CERT}
+      TWIGA_DB_SSL_KEY: ${TWIGA_DB_SSL_KEY}
+      TWIGA_DB_SSL_ROOT_CERT: ${TWIGA_DB_SSL_ROOT_CERT}
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.57.0
+    container_name: twiga-jaeger
+    networks:
+      - twiga-base-network
+    ports:
+      - ${TWIGA_JAEGER_FRONTEND}:${TWIGA_JAEGER_FRONTEND}
+      - ${TWIGA_JAEGER_OLTP_HTTP}:${TWIGA_JAEGER_OLTP_HTTP}
+    command: --memory.max-traces ${TWIGA_JAEGER_MEMORY_MAX_TRACES}
+    environment:
+      COLLECTOR_OTLP_ENABLED: ${TWIGA_JAEGER_COLLECTOR_OTLP_ENABLED}
