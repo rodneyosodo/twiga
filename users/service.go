@@ -120,16 +120,13 @@ func (s *service) UpdateUserUsername(ctx context.Context, token string, user Use
 	return s.usersRepo.UpdateUsername(ctx, user)
 }
 
-func (s *service) UpdateUserPassword(ctx context.Context, token string, id, oldPassword, currentPassowrd string) (User, error) {
+func (s *service) UpdateUserPassword(ctx context.Context, token string, oldPassword, currentPassowrd string) (User, error) {
 	userID, err := s.tokenizer.Validate(token)
 	if err != nil {
 		return User{}, err
 	}
-	if userID != id {
-		return User{}, errors.New("unauthorized")
-	}
 
-	user, err := s.usersRepo.RetrieveByID(ctx, id)
+	user, err := s.usersRepo.RetrieveByID(ctx, userID)
 	if err != nil {
 		return User{}, err
 	}
@@ -293,13 +290,7 @@ func (s *service) DeleteFollower(ctx context.Context, token string, following Fo
 	return s.followingRepo.Delete(ctx, following)
 }
 
-func (s *service) CreateFeed(ctx context.Context, token string, feed Feed) error {
-	userID, err := s.tokenizer.Validate(token)
-	if err != nil {
-		return err
-	}
-	feed.UserID = userID
-
+func (s *service) CreateFeed(ctx context.Context, feed Feed) error {
 	return s.feedRepo.Create(ctx, feed)
 }
 

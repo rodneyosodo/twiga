@@ -200,7 +200,7 @@ type Service interface { //nolint:interfacebloat
 	GetUsers(ctx context.Context, token string, page Page) (UsersPage, error)
 	UpdateUser(ctx context.Context, token string, user User) (User, error)
 	UpdateUserUsername(ctx context.Context, token string, user User) (User, error)
-	UpdateUserPassword(ctx context.Context, token string, id, oldPassword, currentPassowrd string) (User, error)
+	UpdateUserPassword(ctx context.Context, token string, oldPassword, currentPassowrd string) (User, error)
 	UpdateUserEmail(ctx context.Context, token string, user User) (User, error)
 	UpdateUserBio(ctx context.Context, token string, user User) (User, error)
 	UpdateUserPictureURL(ctx context.Context, token string, user User) (User, error)
@@ -219,6 +219,6 @@ type Service interface { //nolint:interfacebloat
 	GetUserFollowings(ctx context.Context, token string, page Page) (FollowingsPage, error)
 	DeleteFollower(ctx context.Context, token string, following Following) error
 
-	CreateFeed(ctx context.Context, token string, feed Feed) error
+	CreateFeed(ctx context.Context, feed Feed) error
 	GetUserFeed(ctx context.Context, token string, page Page) (FeedPage, error)
 }
