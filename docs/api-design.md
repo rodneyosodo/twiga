@@ -11,24 +11,26 @@ Exposes APIs for user registration, login, profile management, and preference up
 API Endpoints:
 
 - `POST /users`: Create a new user account.
+- `GET /users`: Retrieve user profile.
 - `GET /users/{id}`: Retrieve user profile by ID.
 - `PUT /users/{id}`: Update user profile.
+- `PATCH /users/password`: Update user password.
   - `PATCH /users/{id}/username`: Update user username.
-  - `PATCH /users/{id}/password`: Update user password.
   - `PATCH /users/{id}/email`: Update user email.
   - `PATCH /users/{id}/bio`: Update user bio.
   - `PATCH /users/{id}/picture`: Update user profile picture.
   - `PATCH /users/{id}/preferences`: Update user preferences.
 - `DELETE /users/{id}`: Delete user account.
 
-- `POST /login`: Authenticate user and generate a JWT token.
+- `POST /token/issue`: Issue a new access token.
+- `POST /token/refresh`: Refresh an access token.
 
-- `POST /users/{id}/preferences`: Set user notification preferences.
-- `GET /users/{id}/preferences`: Retrieve user notification preferences.
-- `PUT /users/{id}/preferences`: Update user notification preferences.
-  - `PATCH /users/{id}/preferences/email`: Update email notification preference.
-  - `PATCH /users/{id}/preferences/push`: Update push notification preference.
-- `DELETE /users/{id}/preferences`: Delete user notification preferences.
+- `POST /users/preferences`: Set user notification preferences.
+- `GET /users/preferences`: Retrieve user notification preferences.
+- `PUT /users/preferences`: Update user notification preferences.
+  - `PATCH /users/preferences/email`: Update email notification preference.
+  - `PATCH /users/preferences/push`: Update push notification preference.
+- `DELETE /users/preferences`: Delete user notification preferences.
 
 - `GET /users/{id}/followers`: Retrieve user followers.
 - `GET /users/{id}/following`: Retrieve users followed by the user.
