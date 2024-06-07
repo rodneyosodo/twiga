@@ -149,6 +149,7 @@ func (page FeedPage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(a)
 }
 
+//go:generate mockery --name UsersRepository --output=./mocks --filename users.go --quiet
 type UsersRepository interface { //nolint:interfacebloat
 	Create(ctx context.Context, user User) (User, error)
 	RetrieveByID(ctx context.Context, id string) (User, error)
@@ -163,6 +164,7 @@ type UsersRepository interface { //nolint:interfacebloat
 	Delete(ctx context.Context, id string) error
 }
 
+//go:generate mockery --name PreferencesRepository --output=./mocks --filename preference.go --quiet
 type PreferencesRepository interface {
 	Create(ctx context.Context, preference Preference) (Preference, error)
 	RetrieveByUserID(ctx context.Context, userID string) (Preference, error)
@@ -173,17 +175,20 @@ type PreferencesRepository interface {
 	Delete(ctx context.Context, userID string) error
 }
 
+//go:generate mockery --name FollowingRepository --output=./mocks --filename following.go --quiet
 type FollowingRepository interface {
 	Create(ctx context.Context, following Following) (Following, error)
 	RetrieveAll(ctx context.Context, page Page) (FollowingsPage, error)
 	Delete(ctx context.Context, following Following) error
 }
 
+//go:generate mockery --name FeedRepository --output=./mocks --filename feed.go --quiet
 type FeedRepository interface {
 	Create(ctx context.Context, feed Feed) error
 	RetrieveAll(ctx context.Context, page Page) (FeedPage, error)
 }
 
+//go:generate mockery --name Service --output=./mocks --filename service.go --quiet
 type Service interface { //nolint:interfacebloat
 	CreateUser(ctx context.Context, user User) (User, error)
 	GetUserByID(ctx context.Context, id string) (User, error)

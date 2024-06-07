@@ -158,6 +158,7 @@ func (page PostsPage) MarshalJSON() ([]byte, error) {
 	return json.Marshal(a)
 }
 
+//go:generate mockery --name Repository --output=./mocks --filename repository.go --quiet
 type Repository interface { //nolint:interfacebloat
 	Create(ctx context.Context, post Post) (Post, error)
 	RetrieveByID(ctx context.Context, id string) (Post, error)
