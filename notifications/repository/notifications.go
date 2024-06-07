@@ -29,23 +29,29 @@ func NewRepository(db postgres.Database) *repository {
 	return &repository{db}
 }
 
-func (r *repository) CreateNotification(ctx context.Context, notification notifications.Notification) error {
-	query := `INSERT INTO notifications (id, user_id, category, content, is_read)
-			VALUES (:id, :user_id, :category, :content, :is_read)`
+func (r *repository) CreateNotification(ctx context.Context, notification notifications.Notification) (notifications.Notification, error) {
+	query := `INSERT INTO notifications (user_id, category, content, is_read)
+			VALUES (:user_id, :category, :content, :is_read)
+			RETURNING *`
 	dNotification, err := toDBNotification(notification)
 	if err != nil {
-		return err
+		return notifications.Notification{}, err
 	}
 
-	result, err := r.NamedExecContext(ctx, query, dNotification)
+	rows, err := r.NamedQueryContext(ctx, query, dNotification)
 	if err != nil {
-		return err
+		return notifications.Notification{}, err
 	}
-	if rows, _ := result.RowsAffected(); rows == 0 {
-		return errors.New("could not create notification")
+	defer rows.Close()
+
+	dNotification = dbNotification{}
+	if rows.Next() {
+		if err := rows.StructScan(&dNotification); err != nil {
+			return notifications.Notification{}, err
+		}
 	}
 
-	return nil
+	return dNotification.toNotification(), nil
 }
 
 func (r *repository) RetrieveNotification(ctx context.Context, id string) (notifications.Notification, error) {
@@ -81,11 +87,15 @@ func (r *repository) RetrieveAllNotifications(ctx context.Context, page notifica
 	if page.Category.String() != "" {
 		filters = append(filters, fmt.Sprintf("category = '%s'", page.Category.String()))
 	}
+	if page.IsRead != nil {
+		filters = append(filters, fmt.Sprintf("is_read = %t", *page.IsRead))
+	}
 	if len(filters) > 0 {
 		filter = fmt.Sprintf("WHERE %s", strings.Join(filters, " AND "))
 	}
 
 	query := fmt.Sprintf(`SELECT * FROM notifications %s ORDER BY created_at DESC LIMIT :limit OFFSET :offset`, filter)
+
 	dPage := notifications.NotificationsPage{
 		Page: page,
 	}
@@ -98,18 +108,15 @@ func (r *repository) RetrieveAllNotifications(ctx context.Context, page notifica
 
 	items := make([]notifications.Notification, 0)
 	for rows.Next() {
-		var notification notifications.Notification
-		if err := rows.StructScan(&notification); err != nil {
+		var dNotification dbNotification
+		if err := rows.StructScan(&dNotification); err != nil {
 			return notifications.NotificationsPage{}, err
 		}
 
-		items = append(items, notification)
+		items = append(items, dNotification.toNotification())
 	}
 
-	totalQuery := `SELECT COUNT(*) FROM notifications`
-	if filter != "" {
-		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM notifications %s`, filter)
-	}
+	totalQuery := fmt.Sprintf(`SELECT COUNT(*) FROM notifications %s`, filter)
 
 	total, err := postgres.Total(ctx, r.Database, totalQuery, dPage)
 	if err != nil {
@@ -189,25 +196,30 @@ func (r *repository) DeleteNotification(ctx context.Context, id string) error {
 	return nil
 }
 
-func (r *repository) CreateSetting(ctx context.Context, setting notifications.Setting) error {
-	query := `INSERT INTO settings (id, user_id, email_enabled, push_enabled)
-			VALUES (:id, :user_id, :email_enabled, :push_enabled)`
+func (r *repository) CreateSetting(ctx context.Context, setting notifications.Setting) (notifications.Setting, error) {
+	query := `INSERT INTO settings (user_id, email_enabled, push_enabled)
+			VALUES (:user_id, :email_enabled, :push_enabled)
+			RETURNING *`
 
 	dSetting, err := toDBSetting(setting)
 	if err != nil {
-		return err
+		return notifications.Setting{}, err
 	}
 
-	result, err := r.NamedExecContext(ctx, query, dSetting)
+	rows, err := r.NamedQueryContext(ctx, query, dSetting)
 	if err != nil {
-		return err
+		return notifications.Setting{}, err
+	}
+	defer rows.Close()
+
+	dSetting = dbSetting{}
+	if rows.Next() {
+		if err := rows.StructScan(&dSetting); err != nil {
+			return notifications.Setting{}, err
+		}
 	}
 
-	if rows, _ := result.RowsAffected(); rows == 0 {
-		return errors.New("could not create setting")
-	}
-
-	return nil
+	return fromDBSetting(dSetting), nil
 }
 
 func (r *repository) RetrieveSetting(ctx context.Context, id string) (notifications.Setting, error) {
@@ -257,18 +269,15 @@ func (r *repository) RetrieveAllSettings(ctx context.Context, page notifications
 
 	items := make([]notifications.Setting, 0)
 	for rows.Next() {
-		var setting notifications.Setting
-		if err := rows.StructScan(&setting); err != nil {
+		var dSetting dbSetting
+		if err := rows.StructScan(&dSetting); err != nil {
 			return notifications.SettingsPage{}, err
 		}
 
-		items = append(items, setting)
+		items = append(items, fromDBSetting(dSetting))
 	}
 
-	totalQuery := `SELECT COUNT(*) FROM settings`
-	if filter != "" {
-		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM settings %s`, filter)
-	}
+	totalQuery := fmt.Sprintf(`SELECT COUNT(*) FROM settings %s`, filter)
 
 	total, err := postgres.Total(ctx, r.Database, totalQuery, dPage)
 	if err != nil {
@@ -308,7 +317,8 @@ func (r *repository) UpdateEmailSetting(ctx context.Context, id string, isEnable
 	query := `UPDATE settings SET email_enabled = :email_enabled, updated_at = CURRENT_TIMESTAMP
 	WHERE id = :id`
 	dSetting := dbSetting{
-		ID: id,
+		ID:           id,
+		EmailEnabled: pgtype.Bool{Bool: isEnabled, Status: pgtype.Present},
 	}
 
 	result, err := r.NamedExecContext(ctx, query, dSetting)
@@ -326,7 +336,8 @@ func (r *repository) UpdatePushSetting(ctx context.Context, id string, isEnabled
 	query := `UPDATE settings SET push_enabled = :push_enabled, updated_at = CURRENT_TIMESTAMP
 			WHERE id = :id`
 	dSetting := dbSetting{
-		ID: id,
+		ID:          id,
+		PushEnabled: pgtype.Bool{Bool: isEnabled, Status: pgtype.Present},
 	}
 
 	result, err := r.NamedExecContext(ctx, query, dSetting)

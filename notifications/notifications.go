@@ -16,19 +16,21 @@ import (
 type Category uint8
 
 const (
-	General Category = iota
+	Empty Category = iota
+	General
 	Follow
 	Like
 	Comment
-	Empty
 )
 
 func (c Category) String() string {
-	return [...]string{"General", "Follow", "Like", "Comment", ""}[c]
+	return [...]string{"", "General", "Follow", "Like", "Comment"}[c]
 }
 
 func ToCategory(category string) Category {
 	switch category {
+	case "":
+		return Empty
 	case "General":
 		return General
 	case "Follow":
@@ -37,8 +39,6 @@ func ToCategory(category string) Category {
 		return Like
 	case "Comment":
 		return Comment
-	case "":
-		fallthrough
 	default:
 		return Empty
 	}
@@ -60,6 +60,7 @@ type Page struct {
 	Limit    uint64   `db:"limit"    json:"limit"`
 	Category Category `db:"category" json:"category"`
 	UserID   string   `db:"user_id"  json:"user_id"`
+	IsRead   *bool    `db:"is_read"  json:"is_read"`
 }
 
 type NotificationsPage struct {
@@ -112,14 +113,14 @@ func (page SettingsPage) MarshalJSON() ([]byte, error) {
 }
 
 type Repository interface { //nolint:interfacebloat
-	CreateNotification(ctx context.Context, notification Notification) error
+	CreateNotification(ctx context.Context, notification Notification) (Notification, error)
 	RetrieveNotification(ctx context.Context, id string) (Notification, error)
 	RetrieveAllNotifications(ctx context.Context, page Page) (NotificationsPage, error)
 	ReadNotification(ctx context.Context, id string) error
 	ReadAllNotifications(ctx context.Context, page Page) error
 	DeleteNotification(ctx context.Context, id string) error
 
-	CreateSetting(ctx context.Context, setting Setting) error
+	CreateSetting(ctx context.Context, setting Setting) (Setting, error)
 	RetrieveSetting(ctx context.Context, id string) (Setting, error)
 	RetrieveAllSettings(ctx context.Context, page Page) (SettingsPage, error)
 	UpdateSetting(ctx context.Context, setting Setting) error

@@ -29,8 +29,8 @@ func Migration() *migrate.MemoryMigrationSource {
 					`CREATE TABLE IF NOT EXISTS settings (
 						id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
 						user_id UUID UNIQUE NOT NULL,
-						email_enabled BOOLEAN NOT NULL,
-						push_enabled BOOLEAN NOT NULL,
+						email_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+						push_enabled BOOLEAN NOT NULL DEFAULT FALSE,
 						created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 						updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 					)`,
