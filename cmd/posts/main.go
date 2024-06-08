@@ -32,6 +32,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 	"go.opentelemetry.io/contrib/instrumentation/go.mongodb.org/mongo-driver/mongo/otelmongo"
+	"go.opentelemetry.io/otel/sdk/trace"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -69,7 +70,19 @@ func main() {
 	})
 	logger := slog.New(logHandler)
 
-	collection, err := connectDB(ctx, cfg)
+	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.TraceRatio)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
+		cancel()
+		os.Exit(1)
+	}
+	defer func() {
+		if err := tp.Shutdown(ctx); err != nil {
+			logger.Error(fmt.Sprintf("error shutting down tracer provider: %v", err))
+		}
+	}()
+
+	collection, err := connectDB(ctx, cfg, tp)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to MongoDB: %s", err))
 		cancel()
@@ -92,23 +105,11 @@ func main() {
 
 	logger.Info("Successfully connected to users grpc server " + ucHandler.Secure())
 
-	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.TraceRatio)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
-		cancel()
-		os.Exit(1)
-	}
-	defer func() {
-		if err := tp.Shutdown(ctx); err != nil {
-			logger.Error(fmt.Sprintf("error shutting down tracer provider: %v", err))
-		}
-	}()
-
 	svc := newService(collection, uc)
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
-	router.Use(otelgin.Middleware(svcName))
+	router.Use(otelgin.Middleware(svcName, otelgin.WithTracerProvider(tp)))
 	router.Use(gin.Recovery())
 	router.Use(helmet.Default())
 	router.Use(ginprom.PromMiddleware(nil))
@@ -143,8 +144,8 @@ func newService(collection *mongo.Collection, uc proto.UsersServiceClient) posts
 	return posts.NewService(repo, uc)
 }
 
-func connectDB(ctx context.Context, cfg config) (*mongo.Collection, error) {
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoURL).SetMonitor(otelmongo.NewMonitor()))
+func connectDB(ctx context.Context, cfg config, tp *trace.TracerProvider) (*mongo.Collection, error) {
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.MongoURL).SetMonitor(otelmongo.NewMonitor(otelmongo.WithTracerProvider(tp))))
 	if err != nil {
 		return nil, err
 	}
