@@ -42,58 +42,12 @@ func (_m *Repository) CreateNotification(ctx context.Context, notification notif
 	return r0, r1
 }
 
-// CreateSetting provides a mock function with given fields: ctx, setting
-func (_m *Repository) CreateSetting(ctx context.Context, setting notifications.Setting) (notifications.Setting, error) {
-	ret := _m.Called(ctx, setting)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateSetting")
-	}
-
-	var r0 notifications.Setting
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, notifications.Setting) (notifications.Setting, error)); ok {
-		return rf(ctx, setting)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, notifications.Setting) notifications.Setting); ok {
-		r0 = rf(ctx, setting)
-	} else {
-		r0 = ret.Get(0).(notifications.Setting)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, notifications.Setting) error); ok {
-		r1 = rf(ctx, setting)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // DeleteNotification provides a mock function with given fields: ctx, id
 func (_m *Repository) DeleteNotification(ctx context.Context, id string) error {
 	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteNotification")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, id)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// DeleteSetting provides a mock function with given fields: ctx, id
-func (_m *Repository) DeleteSetting(ctx context.Context, id string) error {
-	ret := _m.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteSetting")
 	}
 
 	var r0 error
@@ -124,17 +78,17 @@ func (_m *Repository) ReadAllNotifications(ctx context.Context, page notificatio
 	return r0
 }
 
-// ReadNotification provides a mock function with given fields: ctx, id
-func (_m *Repository) ReadNotification(ctx context.Context, id string) error {
-	ret := _m.Called(ctx, id)
+// ReadNotification provides a mock function with given fields: ctx, userID, id
+func (_m *Repository) ReadNotification(ctx context.Context, userID string, id string) error {
+	ret := _m.Called(ctx, userID, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ReadNotification")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, id)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, userID, id)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -159,34 +113,6 @@ func (_m *Repository) RetrieveAllNotifications(ctx context.Context, page notific
 		r0 = rf(ctx, page)
 	} else {
 		r0 = ret.Get(0).(notifications.NotificationsPage)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, notifications.Page) error); ok {
-		r1 = rf(ctx, page)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// RetrieveAllSettings provides a mock function with given fields: ctx, page
-func (_m *Repository) RetrieveAllSettings(ctx context.Context, page notifications.Page) (notifications.SettingsPage, error) {
-	ret := _m.Called(ctx, page)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RetrieveAllSettings")
-	}
-
-	var r0 notifications.SettingsPage
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, notifications.Page) (notifications.SettingsPage, error)); ok {
-		return rf(ctx, page)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, notifications.Page) notifications.SettingsPage); ok {
-		r0 = rf(ctx, page)
-	} else {
-		r0 = ret.Get(0).(notifications.SettingsPage)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, notifications.Page) error); ok {
@@ -224,88 +150,6 @@ func (_m *Repository) RetrieveNotification(ctx context.Context, id string) (noti
 	}
 
 	return r0, r1
-}
-
-// RetrieveSetting provides a mock function with given fields: ctx, id
-func (_m *Repository) RetrieveSetting(ctx context.Context, id string) (notifications.Setting, error) {
-	ret := _m.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RetrieveSetting")
-	}
-
-	var r0 notifications.Setting
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (notifications.Setting, error)); ok {
-		return rf(ctx, id)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) notifications.Setting); ok {
-		r0 = rf(ctx, id)
-	} else {
-		r0 = ret.Get(0).(notifications.Setting)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// UpdateEmailSetting provides a mock function with given fields: ctx, id, isEnabled
-func (_m *Repository) UpdateEmailSetting(ctx context.Context, id string, isEnabled bool) error {
-	ret := _m.Called(ctx, id, isEnabled)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateEmailSetting")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
-		r0 = rf(ctx, id, isEnabled)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdatePushSetting provides a mock function with given fields: ctx, id, isEnabled
-func (_m *Repository) UpdatePushSetting(ctx context.Context, id string, isEnabled bool) error {
-	ret := _m.Called(ctx, id, isEnabled)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdatePushSetting")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
-		r0 = rf(ctx, id, isEnabled)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// UpdateSetting provides a mock function with given fields: ctx, setting
-func (_m *Repository) UpdateSetting(ctx context.Context, setting notifications.Setting) error {
-	ret := _m.Called(ctx, setting)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateSetting")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, notifications.Setting) error); ok {
-		r0 = rf(ctx, setting)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // NewRepository creates a new instance of Repository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

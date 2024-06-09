@@ -10,36 +10,104 @@ package notifications
 import (
 	"context"
 	"errors"
+	"fmt"
+	"sync"
 
 	"github.com/rodneyosodo/twiga/users/proto"
 )
 
+const defLimit = 100
+
 var _ Service = (*service)(nil)
 
 type service struct {
-	repo  Repository
-	users proto.UsersServiceClient
+	repo      Repository
+	users     proto.UsersServiceClient
+	mu        sync.RWMutex
+	nots      map[string]Notification
+	followers map[string][]string
 }
 
 func NewService(repo Repository, users proto.UsersServiceClient) Service {
 	return &service{
-		repo:  repo,
-		users: users,
+		repo:      repo,
+		users:     users,
+		nots:      make(map[string]Notification),
+		followers: make(map[string][]string),
 	}
 }
 
-func (s *service) CreateNotification(ctx context.Context, token string, notification Notification) (Notification, error) {
-	userID, err := s.IdentifyUser(ctx, token)
+func (s *service) CreateNotification(ctx context.Context, notification Notification) (Notification, error) {
+	notification, err := s.repo.CreateNotification(ctx, notification)
 	if err != nil {
 		return Notification{}, err
 	}
-	notification.UserID = userID
 
-	return s.repo.CreateNotification(ctx, notification)
+	s.mu.Lock()
+	s.nots[notification.UserID] = notification
+	s.mu.Unlock()
+
+	return notification, nil
+}
+
+func (s *service) IdentifyUser(ctx context.Context, token string) (string, error) {
+	resp, err := s.users.IdentifyUser(ctx, &proto.IdentifyUserRequest{Token: token})
+	if err != nil {
+		return "", err
+	}
+
+	req := &proto.GetUserFollowersRequest{Id: resp.GetId(), Offset: 0, Limit: defLimit}
+	followers, err := s.users.GetUserFollowers(ctx, req)
+	if err != nil {
+		return "", err
+	}
+	for followers.Total > uint64(len(followers.Followings)) {
+		req.Offset += defLimit
+		resp, err := s.users.GetUserFollowers(ctx, req)
+		if err != nil {
+			return "", err
+		}
+		followers.Followings = append(followers.Followings, resp.Followings...)
+	}
+
+	userIDs := make([]string, 0, len(followers.Followings))
+	for _, f := range followers.Followings {
+		userIDs = append(userIDs, f.FolloweeId)
+	}
+
+	s.mu.Lock()
+	s.followers[resp.GetId()] = userIDs
+	s.mu.Unlock()
+
+	return resp.GetId(), nil
+}
+
+func (s *service) GetNewNotification(ctx context.Context, userID string) Notification {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	fmt.Println(s.followers[userID])
+	fmt.Println(s.nots)
+
+	ids, ok := s.followers[userID]
+	if !ok {
+		return Notification{}
+	}
+
+	for _, id := range ids {
+		n, ok := s.nots[id]
+		if ok {
+			defer delete(s.nots, id)
+
+			return n
+		}
+	}
+
+	return Notification{}
 }
 
 func (s *service) RetrieveNotification(ctx context.Context, token string, id string) (Notification, error) {
-	userID, err := s.IdentifyUser(ctx, token)
+	userID, err := s.identifyUser(ctx, token)
 	if err != nil {
 		return Notification{}, err
 	}
@@ -55,17 +123,34 @@ func (s *service) RetrieveNotification(ctx context.Context, token string, id str
 }
 
 func (s *service) RetrieveAllNotifications(ctx context.Context, token string, page Page) (NotificationsPage, error) {
-	userID, err := s.IdentifyUser(ctx, token)
+	userID, err := s.identifyUser(ctx, token)
 	if err != nil {
 		return NotificationsPage{}, err
 	}
-	page.UserID = userID
+	followers, err := s.users.GetUserFollowers(ctx, &proto.GetUserFollowersRequest{Id: userID, Offset: 0, Limit: defLimit})
+	if err != nil {
+		return NotificationsPage{}, err
+	}
+	for followers.Total > defLimit {
+		resp, err := s.users.GetUserFollowers(ctx, &proto.GetUserFollowersRequest{Id: userID, Offset: defLimit, Limit: defLimit})
+		if err != nil {
+			return NotificationsPage{}, err
+		}
+		followers.Followings = append(followers.Followings, resp.Followings...)
+		followers.Total += resp.Total
+	}
+
+	userIDs := make([]string, 0, len(followers.Followings))
+	for _, f := range followers.Followings {
+		userIDs = append(userIDs, f.FolloweeId)
+	}
+	page.IDs = userIDs
 
 	return s.repo.RetrieveAllNotifications(ctx, page)
 }
 
 func (s *service) ReadNotification(ctx context.Context, token string, id string) error {
-	userID, err := s.IdentifyUser(ctx, token)
+	userID, err := s.identifyUser(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -74,7 +159,7 @@ func (s *service) ReadNotification(ctx context.Context, token string, id string)
 }
 
 func (s *service) ReadAllNotifications(ctx context.Context, token string, page Page) error {
-	userID, err := s.IdentifyUser(ctx, token)
+	userID, err := s.identifyUser(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -84,7 +169,7 @@ func (s *service) ReadAllNotifications(ctx context.Context, token string, page P
 }
 
 func (s *service) DeleteNotification(ctx context.Context, token string, id string) error {
-	userID, err := s.IdentifyUser(ctx, token)
+	userID, err := s.identifyUser(ctx, token)
 	if err != nil {
 		return err
 	}
@@ -99,107 +184,7 @@ func (s *service) DeleteNotification(ctx context.Context, token string, id strin
 	return s.repo.DeleteNotification(ctx, id)
 }
 
-func (s *service) CreateSetting(ctx context.Context, token string, setting Setting) (Setting, error) {
-	userID, err := s.IdentifyUser(ctx, token)
-	if err != nil {
-		return Setting{}, err
-	}
-	setting.UserID = userID
-
-	return s.repo.CreateSetting(ctx, setting)
-}
-
-func (s *service) RetrieveSetting(ctx context.Context, token string, id string) (Setting, error) {
-	userID, err := s.IdentifyUser(ctx, token)
-	if err != nil {
-		return Setting{}, err
-	}
-	saved, err := s.repo.RetrieveSetting(ctx, id)
-	if err != nil {
-		return Setting{}, err
-	}
-	if saved.UserID != userID {
-		return Setting{}, errors.New("unauthorized")
-	}
-
-	return saved, nil
-}
-
-func (s *service) RetrieveAllSettings(ctx context.Context, token string, page Page) (SettingsPage, error) {
-	userID, err := s.IdentifyUser(ctx, token)
-	if err != nil {
-		return SettingsPage{}, err
-	}
-	page.UserID = userID
-
-	return s.repo.RetrieveAllSettings(ctx, page)
-}
-
-func (s *service) UpdateSetting(ctx context.Context, token string, setting Setting) error {
-	userID, err := s.IdentifyUser(ctx, token)
-	if err != nil {
-		return err
-	}
-	saved, err := s.repo.RetrieveSetting(ctx, setting.ID)
-	if err != nil {
-		return err
-	}
-	if saved.UserID != userID {
-		return errors.New("unauthorized")
-	}
-
-	return s.repo.UpdateSetting(ctx, setting)
-}
-
-func (s *service) UpdateEmailSetting(ctx context.Context, token string, id string, isEnabled bool) error {
-	userID, err := s.IdentifyUser(ctx, token)
-	if err != nil {
-		return err
-	}
-	saved, err := s.repo.RetrieveSetting(ctx, id)
-	if err != nil {
-		return err
-	}
-	if saved.UserID != userID {
-		return errors.New("unauthorized")
-	}
-
-	return s.repo.UpdateEmailSetting(ctx, id, isEnabled)
-}
-
-func (s *service) UpdatePushSetting(ctx context.Context, token string, id string, isEnabled bool) error {
-	userID, err := s.IdentifyUser(ctx, token)
-	if err != nil {
-		return err
-	}
-	saved, err := s.repo.RetrieveSetting(ctx, id)
-	if err != nil {
-		return err
-	}
-	if saved.UserID != userID {
-		return errors.New("unauthorized")
-	}
-
-	return s.repo.UpdatePushSetting(ctx, id, isEnabled)
-}
-
-func (s *service) DeleteSetting(ctx context.Context, token string, id string) error {
-	userID, err := s.IdentifyUser(ctx, token)
-	if err != nil {
-		return err
-	}
-	saved, err := s.repo.RetrieveSetting(ctx, id)
-	if err != nil {
-		return err
-	}
-	if saved.UserID != userID {
-		return errors.New("unauthorized")
-	}
-
-	return s.repo.DeleteSetting(ctx, id)
-}
-
-func (s *service) IdentifyUser(ctx context.Context, token string) (string, error) {
+func (s *service) identifyUser(ctx context.Context, token string) (string, error) {
 	resp, err := s.users.IdentifyUser(ctx, &proto.IdentifyUserRequest{Token: token})
 	if err != nil {
 		return "", err

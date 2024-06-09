@@ -44,7 +44,7 @@ func TestCreateNotification(t *testing.T) {
 			desc: "valid notification",
 			notification: notifications.Notification{
 				UserID:   uuid.Must(uuid.NewV4()).String(),
-				Category: notifications.General,
+				Category: notifications.Post,
 				Content:  namegen.Generate(),
 			},
 			err: nil,
@@ -53,7 +53,7 @@ func TestCreateNotification(t *testing.T) {
 			desc: "empty user id",
 			notification: notifications.Notification{
 				UserID:   "",
-				Category: notifications.General,
+				Category: notifications.Post,
 				Content:  namegen.Generate(),
 			},
 			err: errors.New("invalid input syntax for type uuid"),
@@ -62,7 +62,7 @@ func TestCreateNotification(t *testing.T) {
 			desc: "empty content",
 			notification: notifications.Notification{
 				UserID:   uuid.Must(uuid.NewV4()).String(),
-				Category: notifications.General,
+				Category: notifications.Post,
 				Content:  "",
 			},
 			err: nil,
@@ -71,7 +71,7 @@ func TestCreateNotification(t *testing.T) {
 			desc: "malformed user id",
 			notification: notifications.Notification{
 				UserID:   malformedID,
-				Category: notifications.General,
+				Category: notifications.Post,
 				Content:  namegen.Generate(),
 			},
 			err: errors.New("invalid input syntax for type uuid"),
@@ -80,7 +80,7 @@ func TestCreateNotification(t *testing.T) {
 			desc: "unknown user id",
 			notification: notifications.Notification{
 				UserID:   invalidID,
-				Category: notifications.General,
+				Category: notifications.Post,
 				Content:  namegen.Generate(),
 			},
 			err: nil,
@@ -116,7 +116,7 @@ func TestRetrieveNotification(t *testing.T) {
 
 	notification := notifications.Notification{
 		UserID:   uuid.Must(uuid.NewV4()).String(),
-		Category: notifications.General,
+		Category: notifications.Post,
 		Content:  namegen.Generate(),
 	}
 	notification, err := repo.CreateNotification(context.Background(), notification)
@@ -179,7 +179,7 @@ func TestRetrieveAllNotifications(t *testing.T) {
 	for i := range num {
 		n := notifications.Notification{
 			UserID:   uuid.Must(uuid.NewV4()).String(),
-			Category: notifications.General,
+			Category: notifications.Post,
 			Content:  namegen.Generate(),
 		}
 		if i == 0 {
@@ -324,7 +324,7 @@ func TestReadNotification(t *testing.T) {
 
 	notification := notifications.Notification{
 		UserID:   uuid.Must(uuid.NewV4()).String(),
-		Category: notifications.General,
+		Category: notifications.Post,
 		Content:  namegen.Generate(),
 	}
 	notification, err := repo.CreateNotification(context.Background(), notification)
@@ -384,7 +384,7 @@ func TestReadAllNotifications(t *testing.T) {
 	for i := range num {
 		n := notifications.Notification{
 			UserID:   uuid.Must(uuid.NewV4()).String(),
-			Category: notifications.General,
+			Category: notifications.Post,
 			Content:  namegen.Generate(),
 		}
 
@@ -468,7 +468,7 @@ func TestDeleteNotification(t *testing.T) {
 
 	notification := notifications.Notification{
 		UserID:   uuid.Must(uuid.NewV4()).String(),
-		Category: notifications.General,
+		Category: notifications.Post,
 		Content:  namegen.Generate(),
 	}
 	notification, err := repo.CreateNotification(context.Background(), notification)

@@ -90,6 +90,9 @@ func (r *repository) RetrieveAllNotifications(ctx context.Context, page notifica
 	if page.IsRead != nil {
 		filters = append(filters, fmt.Sprintf("is_read = %t", *page.IsRead))
 	}
+	if page.IDs != nil {
+		filters = append(filters, fmt.Sprintf("user_id IN ('%s')", strings.Join(page.IDs, "','")))
+	}
 	if len(filters) > 0 {
 		filter = fmt.Sprintf("WHERE %s", strings.Join(filters, " AND "))
 	}

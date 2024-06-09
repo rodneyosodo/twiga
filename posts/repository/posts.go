@@ -10,7 +10,6 @@ package repository
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -493,7 +492,6 @@ func (r *repository) DeleteShare(ctx context.Context, id string) error {
 }
 
 func getFilter(page posts.Page) (bson.D, *options.FindOptions) {
-	fmt.Printf("\n\n\n\n\npage: %+v\n\n\n\n\n", page)
 	filter := bson.D{}
 	opts := options.Find()
 

@@ -14,6 +14,8 @@ service UsersService {
   rpc GetUserByID(GetUserByIDRequest) returns (GetUserByIDResponse) {}
   rpc GetUserPreferences(GetUserPreferencesRequest)
       returns (GetUserPreferencesResponse) {}
+  rpc GetUserFollowers(GetUserFollowersRequest)
+      returns (GetUserFollowersResponse) {}
   rpc CreateFeed(CreateFeedRequest) returns (CreateFeedResponse) {}
   rpc IdentifyUser(IdentifyUserRequest) returns (IdentifyUserResponse) {}
 }
@@ -37,14 +39,31 @@ message GetUserPreferencesResponse {
   bool push_notifications = 2;
 }
 
+message GetUserFollowersRequest {
+  string id = 1;
+  uint64 offset = 2;
+  uint64 limit = 3;
+}
+
+message Following {
+  string id = 1;
+  string follower_id = 2;
+  string followee_id = 3;
+}
+
+message GetUserFollowersResponse {
+  repeated Following followings = 1;
+  uint64 total = 2;
+  uint64 offset = 3;
+  uint64 limit = 4;
+}
+
 message CreateFeedRequest {
   string user_id = 1;
   string post_id = 2;
 }
 
-message CreateFeedResponse {
-  string message = 1;
-}
+message CreateFeedResponse { string message = 1; }
 
 message IdentifyUserRequest { string token = 1; }
 

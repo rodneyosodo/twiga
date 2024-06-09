@@ -19,7 +19,7 @@ func Migration() *migrate.MemoryMigrationSource {
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS notifications (
 						id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
-						user_id UUID UNIQUE NOT NULL,
+						user_id UUID NOT NULL,
 						category VARCHAR(256) NOT NULL CHECK (category <> ''),
 						content TEXT NOT NULL,
 						is_read BOOLEAN NOT NULL DEFAULT FALSE,

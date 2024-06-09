@@ -15,6 +15,7 @@ volumes:
   twiga-users-db-volume:
   twiga-posts-db-volume:
   twiga-posts-db-config-volume:
+  twiga-notifications-db-volume:
 
 services:
   twiga-users-db:
@@ -37,6 +38,7 @@ services:
       - twiga-base-network
     depends_on:
       - twiga-users-db
+      - rabbitmq
     ports:
       - ${TWIGA_USERS_HTTP_PORT}:${TWIGA_USERS_HTTP_PORT}
       - ${TWIGA_USERS_GRPC_PORT}:${TWIGA_USERS_GRPC_PORT}
@@ -68,6 +70,7 @@ services:
       TWIGA_USERS_DB_SSL_CERT: ${TWIGA_USERS_DB_SSL_CERT}
       TWIGA_USERS_DB_SSL_KEY: ${TWIGA_USERS_DB_SSL_KEY}
       TWIGA_USERS_DB_SSL_ROOT_CERT: ${TWIGA_USERS_DB_SSL_ROOT_CERT}
+      TWIGA_ES_URL: ${TWIGA_ES_URL}
 
   twiga-posts-db:
     image: mongo:7.0.11
@@ -88,6 +91,8 @@ services:
       - twiga-base-network
     depends_on:
       - twiga-posts-db
+      - twiga-users
+      - rabbitmq
     ports:
       - ${TWIGA_POSTS_HTTP_PORT}:${TWIGA_POSTS_HTTP_PORT}
     restart: on-failure
@@ -109,10 +114,63 @@ services:
       TWIGA_USERS_GRPC_CLIENT_CERT: ${TWIGA_USERS_GRPC_CLIENT_CERT}
       TWIGA_USERS_GRPC_CLIENT_KEY: ${TWIGA_USERS_GRPC_CLIENT_KEY}
       TWIGA_USERS_GRPC_SERVER_CA_CERTS: ${TWIGA_USERS_GRPC_SERVER_CA_CERTS}
+      TWIGA_ES_URL: ${TWIGA_ES_URL}
+
+  twiga-notifications-db:
+    image: postgres:16.3-alpine
+    container_name: twiga-notifications-db
+    restart: on-failure
+    networks:
+      - twiga-base-network
+    volumes:
+      - twiga-notifications-db-volume:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${TWIGA_NOTIFICATIONS_DB_USER}
+      POSTGRES_PASSWORD: ${TWIGA_NOTIFICATIONS_DB_PASS}
+      POSTGRES_DB: ${TWIGA_NOTIFICATIONS_DB_NAME}
+
+  twiga-notifications:
+    image: ghcr.io/rodneyosodo/twiga/notifications:${TWIGA_RELEASE_TAG}
+    container_name: twiga-notifications
+    networks:
+      - twiga-base-network
+    depends_on:
+      - twiga-notifications-db
+      - twiga-users
+      - rabbitmq
+    ports:
+      - ${TWIGA_NOTIFICATIONS_HTTP_PORT}:${TWIGA_NOTIFICATIONS_HTTP_PORT}
+    restart: on-failure
+    environment:
+      TWIGA_NOTIFICATIONS_LOG_LEVEL: ${TWIGA_NOTIFICATIONS_LOG_LEVEL}
+      TWIGA_JAEGER_URL: ${TWIGA_JAEGER_URL}
+      TWIGA_JAEGER_TRACE_RATIO: ${TWIGA_JAEGER_TRACE_RATIO}
+      TWIGA_NOTIFICATIONS_HTTP_HOST: ${TWIGA_NOTIFICATIONS_HTTP_HOST}
+      TWIGA_NOTIFICATIONS_HTTP_PORT: ${TWIGA_NOTIFICATIONS_HTTP_PORT}
+      TWIGA_NOTIFICATIONS_HTTP_SERVER_CERT: ${TWIGA_NOTIFICATIONS_HTTP_SERVER_CERT}
+      TWIGA_NOTIFICATIONS_HTTP_SERVER_KEY: ${TWIGA_NOTIFICATIONS_HTTP_SERVER_KEY}
+      TWIGA_NOTIFICATIONS_HTTP_SERVER_CA_CERTS: ${TWIGA_NOTIFICATIONS_HTTP_SERVER_CA_CERTS}
+      TWIGA_NOTIFICATIONS_HTTP_CLIENT_CA_CERTS: ${TWIGA_NOTIFICATIONS_HTTP_CLIENT_CA_CERTS}
+      TWIGA_NOTIFICATIONS_DB_HOST: ${TWIGA_NOTIFICATIONS_DB_HOST}
+      TWIGA_NOTIFICATIONS_DB_PORT: ${TWIGA_NOTIFICATIONS_DB_PORT}
+      TWIGA_NOTIFICATIONS_DB_USER: ${TWIGA_NOTIFICATIONS_DB_USER}
+      TWIGA_NOTIFICATIONS_DB_PASS: ${TWIGA_NOTIFICATIONS_DB_PASS}
+      TWIGA_NOTIFICATIONS_DB_NAME: ${TWIGA_NOTIFICATIONS_DB_NAME}
+      TWIGA_NOTIFICATIONS_DB_SSL_MODE: ${TWIGA_NOTIFICATIONS_DB_SSL_MODE}
+      TWIGA_NOTIFICATIONS_DB_SSL_CERT: ${TWIGA_NOTIFICATIONS_DB_SSL_CERT}
+      TWIGA_NOTIFICATIONS_DB_SSL_KEY: ${TWIGA_NOTIFICATIONS_DB_SSL_KEY}
+      TWIGA_NOTIFICATIONS_DB_SSL_ROOT_CERT: ${TWIGA_NOTIFICATIONS_DB_SSL_ROOT_CERT}
+      TWIGA_USERS_GRPC_URL: ${TWIGA_USERS_GRPC_URL}
+      TWIGA_USERS_GRPC_TIMEOUT: ${TWIGA_USERS_GRPC_TIMEOUT}
+      TWIGA_USERS_GRPC_CLIENT_CERT: ${TWIGA_USERS_GRPC_CLIENT_CERT}
+      TWIGA_USERS_GRPC_CLIENT_KEY: ${TWIGA_USERS_GRPC_CLIENT_KEY}
+      TWIGA_USERS_GRPC_SERVER_CA_CERTS: ${TWIGA_USERS_GRPC_SERVER_CA_CERTS}
+      TWIGA_ES_URL: ${TWIGA_ES_URL}
 
   jaeger:
     image: jaegertracing/all-in-one:1.57.0
     container_name: twiga-jaeger
+    restart: on-failure
     networks:
       - twiga-base-network
     ports:
@@ -121,3 +179,18 @@ services:
     command: --memory.max-traces ${TWIGA_JAEGER_MEMORY_MAX_TRACES}
     environment:
       COLLECTOR_OTLP_ENABLED: ${TWIGA_JAEGER_COLLECTOR_OTLP_ENABLED}
+
+  rabbitmq:
+    image: rabbitmq:3.13.3-management-alpine
+    container_name: twiga-rabbitmq
+    restart: on-failure
+    networks:
+      - twiga-base-network
+    ports:
+      - ${TWIGA_RABBITMQ_PORT}:${TWIGA_RABBITMQ_PORT}
+      - ${TWIGA_RABBITMQ_HTTP_PORT}:${TWIGA_RABBITMQ_HTTP_PORT}
+    environment:
+      RABBITMQ_ERLANG_COOKIE: ${TWIGA_RABBITMQ_COOKIE}
+      RABBITMQ_DEFAULT_USER: ${TWIGA_RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${TWIGA_RABBITMQ_PASS}
+      RABBITMQ_DEFAULT_VHOST: ${TWIGA_RABBITMQ_VHOST}

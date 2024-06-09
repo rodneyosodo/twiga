@@ -6,7 +6,7 @@
 # http://www.apache.org/licenses/LICENSE-2.0
 
 DOCKER_IMAGE_NAME_PREFIX=ghcr.io/rodneyosodo/twiga
-SERVICES = users posts
+SERVICES = users posts notifications
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 BUILD_DIR = build
@@ -20,7 +20,7 @@ COMMIT_DATE ?= $(shell git log -1 --date=format:"%F_%T" --format=%cd)
 
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
-	go build -tags $(MG_MESSAGE_BROKER_TYPE) --tags $(MG_ES_TYPE) -ldflags "-s -w \
+	go build -ldflags "-s -w \
 	-X 'go.szostok.io/version.version=$(VERSION)' \
 	-X 'go.szostok.io/version.commit=$(COMMIT)' \
 	-X 'go.szostok.io/version.commitDate=$(COMMIT_DATE)' \

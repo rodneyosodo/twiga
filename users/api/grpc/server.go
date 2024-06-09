@@ -27,6 +27,7 @@ type server struct {
 	proto.UnimplementedUsersServiceServer
 	getUserByID        kitgrpc.Handler
 	getUserPreferences kitgrpc.Handler
+	getUserFollowers   kitgrpc.Handler
 	createFeed         kitgrpc.Handler
 	identifyUser       kitgrpc.Handler
 }
@@ -42,6 +43,11 @@ func NewServer(svc users.Service) proto.UsersServiceServer {
 			api.GetUserPreferenceEndpoint(svc),
 			decodeGetUserPreferencesRequest,
 			encodeGetUserPreferencesResponse,
+		),
+		getUserFollowers: kitgrpc.NewServer(
+			api.GetFollowingsEndpoint(svc),
+			decodeGetUserFollowersRequest,
+			encodeGetUserFollowersResponse,
 		),
 		createFeed: kitgrpc.NewServer(
 			api.CreateFeedEndpoint(svc),
@@ -132,6 +138,59 @@ func encodeGetUserPreferencesResponse(_ context.Context, grpcRes interface{}) (i
 	return &proto.GetUserPreferencesResponse{
 		EmailNotifications: res.EmailEnable,
 		PushNotifications:  res.PushEnable,
+	}, nil
+}
+
+func (s *server) GetUserFollowers(ctx context.Context, req *proto.GetUserFollowersRequest) (*proto.GetUserFollowersResponse, error) {
+	_, res, err := s.getUserFollowers.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+
+	resp, ok := res.(*proto.GetUserFollowersResponse)
+	if !ok {
+		return nil, encodeError(errors.New("invalid response"))
+	}
+
+	return resp, nil
+}
+
+func decodeGetUserFollowersRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req, ok := grpcReq.(*proto.GetUserFollowersRequest)
+	if !ok {
+		return nil, encodeError(errors.New("invalid request"))
+	}
+
+	return api.EntitiesReq{
+		SVC: api.GRPC,
+		Page: users.Page{
+			Offset: req.GetOffset(),
+			Limit:  req.GetLimit(),
+			UserID: req.GetId(),
+		},
+	}, nil
+}
+
+func encodeGetUserFollowersResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res, ok := grpcRes.(users.FollowingsPage)
+	if !ok {
+		return nil, encodeError(errors.New("invalid response"))
+	}
+
+	followings := make([]*proto.Following, 0, len(res.Followings))
+	for _, following := range res.Followings {
+		followings = append(followings, &proto.Following{
+			Id:         following.ID,
+			FollowerId: following.FollowerID,
+			FolloweeId: following.FolloweeID,
+		})
+	}
+
+	return &proto.GetUserFollowersResponse{
+		Followings: followings,
+		Total:      res.Total,
+		Offset:     res.Offset,
+		Limit:      res.Limit,
 	}, nil
 }
 

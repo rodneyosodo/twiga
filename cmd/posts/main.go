@@ -20,13 +20,14 @@ import (
 	helmet "github.com/danielkov/gin-helmet"
 	"github.com/gin-gonic/gin"
 	"github.com/rodneyosodo/twiga/internal/auth"
+	"github.com/rodneyosodo/twiga/internal/events/rabbitmq"
 	"github.com/rodneyosodo/twiga/internal/jaeger"
 	"github.com/rodneyosodo/twiga/internal/server"
 	httpserver "github.com/rodneyosodo/twiga/internal/server/http"
 	"github.com/rodneyosodo/twiga/posts"
 	"github.com/rodneyosodo/twiga/posts/api"
+	"github.com/rodneyosodo/twiga/posts/producer"
 	"github.com/rodneyosodo/twiga/posts/repository"
-	"github.com/rodneyosodo/twiga/users/proto"
 	sloggin "github.com/samber/slog-gin"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -50,6 +51,7 @@ type config struct {
 	MongoColl  string  `env:"TWIGA_POSTS_MONGO_COLL"   envDefault:"posts"`
 	JaegerURL  url.URL `env:"TWIGA_JAEGER_URL"         envDefault:"http://localhost:14268"`
 	TraceRatio float64 `env:"TWIGA_JAEGER_TRACE_RATIO" envDefault:"1.0"`
+	ESURL      string  `env:"TWIGA_ES_URL"             envDefault:"amqp://twiga:twiga@localhost:5672/"`
 }
 
 func main() {
@@ -105,7 +107,17 @@ func main() {
 
 	logger.Info("Successfully connected to users grpc server " + ucHandler.Secure())
 
-	svc := newService(collection, uc)
+	repo := repository.NewRepository(collection)
+
+	svc := posts.NewService(repo, uc)
+
+	publisher, err := rabbitmq.NewPublisher(cfg.ESURL)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to RabbitMQ: %s", err))
+		cancel()
+		os.Exit(1)
+	}
+	svc = producer.NewEventStore(publisher, svc)
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
@@ -136,12 +148,6 @@ func main() {
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("%s service terminated: %s", svcName, err))
 	}
-}
-
-func newService(collection *mongo.Collection, uc proto.UsersServiceClient) posts.Service {
-	repo := repository.NewRepository(collection)
-
-	return posts.NewService(repo, uc)
 }
 
 func connectDB(ctx context.Context, cfg config, tp *trace.TracerProvider) (*mongo.Collection, error) {

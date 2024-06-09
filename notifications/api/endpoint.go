@@ -10,9 +10,11 @@ package api
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/chenjiandongx/ginprom"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	iapi "github.com/rodneyosodo/twiga/internal/api"
 	"github.com/rodneyosodo/twiga/notifications"
@@ -26,44 +28,68 @@ const (
 	imageField      entityfield = "image"
 	visibilityField entityfield = "visibility"
 	allFields       entityfield = "all"
+
+	bufferSize   = 1024
+	defaultLimit = 100
+	defaultSleep = 5 * time.Second
 )
 
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  bufferSize,
+	WriteBufferSize: bufferSize,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
 func Endpoints(router *gin.Engine, svc notifications.Service) {
-	router.POST("/notifications", createNotifications(svc))
 	router.GET("/notifications", getNotifications(svc))
 	router.GET("/notifications/:id", getNotification(svc))
 	router.POST("/notifications/:id/read", readNotification(svc))
 	router.POST("/notifications/read", readAllNotifications(svc))
 	router.DELETE("/notifications/:id", deleteNotification(svc))
 
-	router.POST("/settings", createSetting(svc))
-	router.GET("/settings", getSettings(svc))
-	router.GET("/settings/:id", getSetting(svc))
-	router.PUT("/settings/:id", updateSetting(svc))
-	router.DELETE("/settings/:id", deleteSetting(svc))
+	router.GET("/ws", wsHandler(svc))
 
 	router.GET("/metrics", ginprom.PromHandler(promhttp.Handler()))
 }
 
-func createNotifications(svc notifications.Service) func(ctx *gin.Context) {
+func wsHandler(svc notifications.Service) func(ctx *gin.Context) {
 	return func(ctx *gin.Context) {
 		token := iapi.GinExtractToken(ctx)
 		if token == "" {
 			ctx.JSON(http.StatusUnauthorized, gin.H{
 				"error": "Unauthorized",
 			})
-		}
-
-		var notification notifications.Notification
-		if err := ctx.BindJSON(&notification); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
 
 			return
 		}
 
-		notification, err := svc.CreateNotification(ctx, token, notification)
+		category := ctx.DefaultQuery("category", "")
+		strIsRead := ctx.DefaultQuery("is_read", "false")
+		isRead, err := strconv.ParseBool(strIsRead)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+		}
+
+		conn, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+		if err != nil {
+			ctx.AbortWithError(http.StatusBadRequest, err)
+
+			return
+		}
+		defer conn.Close()
+
+		pm := notifications.Page{
+			Offset:   0,
+			Limit:    defaultLimit,
+			Category: notifications.ToCategory(category),
+			IsRead:   &isRead,
+		}
+
+		notifs, err := svc.RetrieveAllNotifications(ctx, token, pm)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
 				"error": err.Error(),
@@ -72,7 +98,49 @@ func createNotifications(svc notifications.Service) func(ctx *gin.Context) {
 			return
 		}
 
-		ctx.JSON(http.StatusCreated, notification)
+		for notifs.Total > uint64(len(notifs.Notifications)) {
+			pm.Offset += defaultLimit
+			newNotifs, err := svc.RetrieveAllNotifications(ctx, token, pm)
+			if err != nil {
+				ctx.JSON(http.StatusBadRequest, gin.H{
+					"error": err.Error(),
+				})
+
+				return
+			}
+			notifs.Notifications = append(notifs.Notifications, newNotifs.Notifications...)
+		}
+
+		for _, n := range notifs.Notifications {
+			if err := conn.WriteJSON(n); err != nil {
+				ctx.AbortWithError(http.StatusInternalServerError, err)
+
+				return
+			}
+		}
+
+		userID, err := svc.IdentifyUser(ctx, token)
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+
+			return
+		}
+
+		for {
+			newNotif := svc.GetNewNotification(ctx, userID)
+			if newNotif.ID == "" {
+				goto sleep
+			}
+			if err := conn.WriteJSON(newNotif); err != nil {
+				ctx.AbortWithError(http.StatusInternalServerError, err)
+
+				break
+			}
+		sleep:
+			time.Sleep(defaultSleep)
+		}
 	}
 }
 
@@ -133,7 +201,7 @@ func getNotifications(svc notifications.Service) func(ctx *gin.Context) {
 			return
 		}
 		category := ctx.DefaultQuery("category", "")
-		strIsRead := ctx.DefaultQuery("is_read", "true")
+		strIsRead := ctx.DefaultQuery("is_read", "false")
 		isRead, err := strconv.ParseBool(strIsRead)
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, gin.H{
@@ -283,200 +351,6 @@ func deleteNotification(svc notifications.Service) func(ctx *gin.Context) {
 
 		ctx.JSON(http.StatusNoContent, gin.H{
 			"message": "Post removed",
-		})
-	}
-}
-
-func createSetting(svc notifications.Service) func(ctx *gin.Context) {
-	return func(ctx *gin.Context) {
-		token := iapi.GinExtractToken(ctx)
-		if token == "" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized",
-			})
-		}
-		postID := ctx.Param("id")
-		if postID == "" {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": "Post ID is required",
-			})
-		}
-
-		var setting notifications.Setting
-		if err := ctx.BindJSON(&setting); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-
-		setting, err := svc.CreateSetting(ctx, token, setting)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-
-		ctx.JSON(http.StatusCreated, setting)
-	}
-}
-
-func getSetting(svc notifications.Service) func(ctx *gin.Context) {
-	return func(ctx *gin.Context) {
-		token := iapi.GinExtractToken(ctx)
-		if token == "" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized",
-			})
-		}
-		id := ctx.Param("id")
-		if id == "" {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": "ID is required",
-			})
-		}
-
-		setting, err := svc.RetrieveSetting(ctx, token, id)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, setting)
-	}
-}
-
-func getSettings(svc notifications.Service) func(ctx *gin.Context) {
-	return func(ctx *gin.Context) {
-		token := iapi.GinExtractToken(ctx)
-		if token == "" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized",
-			})
-		}
-		postID := ctx.Param("id")
-		if postID == "" {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": "Post ID is required",
-			})
-		}
-
-		strOffset := ctx.DefaultQuery("offset", "0")
-		offset, err := strconv.ParseUint(strOffset, 10, 64)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-		strLimit := ctx.DefaultQuery("limit", "10")
-		limit, err := strconv.ParseUint(strLimit, 10, 64)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-
-		category := ctx.DefaultQuery("category", "")
-		strIsRead := ctx.DefaultQuery("is_read", "true")
-		isRead, err := strconv.ParseBool(strIsRead)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-
-		page := notifications.Page{
-			Offset:   offset,
-			Limit:    limit,
-			UserID:   ctx.DefaultQuery("user_id", ""),
-			Category: notifications.ToCategory(category),
-			IsRead:   &isRead,
-		}
-
-		settings, err := svc.RetrieveAllSettings(ctx, token, page)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, settings)
-	}
-}
-
-func updateSetting(svc notifications.Service) func(ctx *gin.Context) {
-	return func(ctx *gin.Context) {
-		token := iapi.GinExtractToken(ctx)
-		if token == "" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized",
-			})
-		}
-
-		var setting notifications.Setting
-		if err := ctx.BindJSON(&setting); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-		setting.ID = ctx.Param("id")
-
-		err := svc.UpdateSetting(ctx, token, setting)
-		if err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-
-		ctx.JSON(http.StatusOK, gin.H{
-			"message": "Setting updated",
-		})
-	}
-}
-
-func deleteSetting(svc notifications.Service) func(ctx *gin.Context) {
-	return func(ctx *gin.Context) {
-		token := iapi.GinExtractToken(ctx)
-		if token == "" {
-			ctx.JSON(http.StatusUnauthorized, gin.H{
-				"error": "Unauthorized",
-			})
-		}
-		id := ctx.Param("id")
-		if id == "" {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": "ID is required",
-			})
-		}
-
-		if err := svc.DeleteSetting(ctx, token, id); err != nil {
-			ctx.JSON(http.StatusBadRequest, gin.H{
-				"error": err.Error(),
-			})
-
-			return
-		}
-
-		ctx.JSON(http.StatusNoContent, gin.H{
-			"message": "Comment removed",
 		})
 	}
 }

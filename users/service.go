@@ -326,8 +326,10 @@ func (s *service) CreateFollower(ctx context.Context, token string, following Fo
 }
 
 func (s *service) GetUserFollowings(ctx context.Context, token string, page Page) (FollowingsPage, error) {
-	if _, err := s.tokenizer.Validate(token); err != nil {
-		return FollowingsPage{}, err
+	if token != "" {
+		if _, err := s.tokenizer.Validate(token); err != nil {
+			return FollowingsPage{}, err
+		}
 	}
 
 	return s.followingRepo.RetrieveAll(ctx, page)

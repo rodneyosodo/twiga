@@ -11,12 +11,14 @@ require (
 	github.com/go-chi/chi/v5 v5.0.12
 	github.com/go-kit/kit v0.13.0
 	github.com/gofrs/uuid v4.4.0+incompatible
+	github.com/gorilla/websocket v1.5.2
 	github.com/jackc/pgtype v1.14.3
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lestrrat-go/jwx/v2 v2.0.21
 	github.com/ory/dockertest/v3 v3.10.0
 	github.com/prometheus/client_golang v1.19.1
+	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.5.3
 	github.com/rubenv/sql-migrate v1.6.1
 	github.com/samber/slog-gin v1.13.3

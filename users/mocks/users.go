@@ -229,31 +229,21 @@ func (_m *UsersRepository) UpdateEmail(ctx context.Context, user users.User) (us
 }
 
 // UpdatePassword provides a mock function with given fields: ctx, user
-func (_m *UsersRepository) UpdatePassword(ctx context.Context, user users.User) (users.User, error) {
+func (_m *UsersRepository) UpdatePassword(ctx context.Context, user users.User) error {
 	ret := _m.Called(ctx, user)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdatePassword")
 	}
 
-	var r0 users.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) (users.User, error)); ok {
-		return rf(ctx, user)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, users.User) users.User); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, users.User) error); ok {
 		r0 = rf(ctx, user)
 	} else {
-		r0 = ret.Get(0).(users.User)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, users.User) error); ok {
-		r1 = rf(ctx, user)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // UpdatePictureURL provides a mock function with given fields: ctx, user

@@ -17,8 +17,9 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v10"
+	"github.com/rodneyosodo/twiga/internal/events/rabbitmq"
 	"github.com/rodneyosodo/twiga/internal/jaeger"
-	pgclient "github.com/rodneyosodo/twiga/internal/postgres"
+	"github.com/rodneyosodo/twiga/internal/postgres"
 	"github.com/rodneyosodo/twiga/internal/prometheus"
 	"github.com/rodneyosodo/twiga/internal/server"
 	grpcserver "github.com/rodneyosodo/twiga/internal/server/grpc"
@@ -28,6 +29,7 @@ import (
 	httpapi "github.com/rodneyosodo/twiga/users/api/http"
 	"github.com/rodneyosodo/twiga/users/jwt"
 	"github.com/rodneyosodo/twiga/users/middleware"
+	"github.com/rodneyosodo/twiga/users/producer"
 	"github.com/rodneyosodo/twiga/users/proto"
 	"github.com/rodneyosodo/twiga/users/repository"
 	"go.opentelemetry.io/otel/trace"
@@ -52,6 +54,7 @@ type config struct {
 	JWTExp     time.Duration `env:"TWIGA_USERS_JWT_EXP"      envDefault:"24h"`
 	JaegerURL  url.URL       `env:"TWIGA_JAEGER_URL"         envDefault:"http://localhost:14268"`
 	TraceRatio float64       `env:"TWIGA_JAEGER_TRACE_RATIO" envDefault:"1.0"`
+	ESURL      string        `env:"TWIGA_ES_URL"             envDefault:"amqp://twiga:twiga@localhost:5672/"`
 }
 
 func main() {
@@ -72,12 +75,12 @@ func main() {
 	})
 	logger := slog.New(logHandler)
 
-	dbConfig := pgclient.Config{Name: defDB}
+	dbConfig := postgres.Config{Name: defDB}
 	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
 		logger.Error(err.Error())
 	}
 
-	db, err := pgclient.Setup(dbConfig, *repository.Migration())
+	db, err := postgres.Setup(dbConfig, *repository.Migration())
 	if err != nil {
 		logger.Error(err.Error())
 		cancel()
@@ -98,7 +101,12 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	svc := newService(db, tracer, cfg, logger)
+	svc, err := newService(db, tracer, cfg, logger)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
+		cancel()
+		os.Exit(1)
+	}
 
 	httpServerConfig := server.Config{Port: defHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -137,7 +145,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, tracer trace.Tracer, cfg config, logger *slog.Logger) users.Service {
+func newService(db postgres.Database, tracer trace.Tracer, cfg config, logger *slog.Logger) (users.Service, error) {
 	urepo := repository.NewUsersRepository(db)
 	prepo := repository.NewPreferencesRepository(db)
 	forepo := repository.NewFollowingRepository(db)
@@ -150,5 +158,11 @@ func newService(db pgclient.Database, tracer trace.Tracer, cfg config, logger *s
 	counter, latency := prometheus.MakeMetrics("users", "api")
 	svc = middleware.NewMetricsMiddleware(counter, latency, svc)
 
-	return svc
+	publisher, err := rabbitmq.NewPublisher(cfg.ESURL)
+	if err != nil {
+		return nil, err
+	}
+	svc = producer.NewEventStore(publisher, svc)
+
+	return svc, nil
 }

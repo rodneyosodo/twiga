@@ -198,9 +198,9 @@ func (_m *Service) GetPreferences(ctx context.Context, token string, page users.
 	return r0, r1
 }
 
-// GetPreferencesByUserID provides a mock function with given fields: ctx, token
-func (_m *Service) GetPreferencesByUserID(ctx context.Context, token string) (users.Preference, error) {
-	ret := _m.Called(ctx, token)
+// GetPreferencesByUserID provides a mock function with given fields: ctx, token, id
+func (_m *Service) GetPreferencesByUserID(ctx context.Context, token string, id string) (users.Preference, error) {
+	ret := _m.Called(ctx, token, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPreferencesByUserID")
@@ -208,17 +208,17 @@ func (_m *Service) GetPreferencesByUserID(ctx context.Context, token string) (us
 
 	var r0 users.Preference
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (users.Preference, error)); ok {
-		return rf(ctx, token)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (users.Preference, error)); ok {
+		return rf(ctx, token, id)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) users.Preference); ok {
-		r0 = rf(ctx, token)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) users.Preference); ok {
+		r0 = rf(ctx, token, id)
 	} else {
 		r0 = ret.Get(0).(users.Preference)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, token)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, token, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -591,31 +591,21 @@ func (_m *Service) UpdateUserEmail(ctx context.Context, token string, user users
 }
 
 // UpdateUserPassword provides a mock function with given fields: ctx, token, oldPassword, currentPassowrd
-func (_m *Service) UpdateUserPassword(ctx context.Context, token string, oldPassword string, currentPassowrd string) (users.User, error) {
+func (_m *Service) UpdateUserPassword(ctx context.Context, token string, oldPassword string, currentPassowrd string) error {
 	ret := _m.Called(ctx, token, oldPassword, currentPassowrd)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateUserPassword")
 	}
 
-	var r0 users.User
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (users.User, error)); ok {
-		return rf(ctx, token, oldPassword, currentPassowrd)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) users.User); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
 		r0 = rf(ctx, token, oldPassword, currentPassowrd)
 	} else {
-		r0 = ret.Get(0).(users.User)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
-		r1 = rf(ctx, token, oldPassword, currentPassowrd)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // UpdateUserPictureURL provides a mock function with given fields: ctx, token, user

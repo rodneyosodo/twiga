@@ -17,31 +17,38 @@ type Category uint8
 
 const (
 	Empty Category = iota
-	General
+	Post
 	Follow
 	Like
 	Comment
+	Share
 )
 
 func (c Category) String() string {
-	return [...]string{"", "General", "Follow", "Like", "Comment"}[c]
+	return [...]string{"", "Post", "Follow", "Like", "Comment", "Share"}[c]
 }
 
 func ToCategory(category string) Category {
 	switch category {
 	case "":
 		return Empty
-	case "General":
-		return General
+	case "Post":
+		return Post
 	case "Follow":
 		return Follow
 	case "Like":
 		return Like
 	case "Comment":
 		return Comment
+	case "Share":
+		return Share
 	default:
 		return Empty
 	}
+}
+
+func (c Category) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.String())
 }
 
 type Notification struct {
@@ -55,12 +62,13 @@ type Notification struct {
 }
 
 type Page struct {
-	Total    uint64   `db:"total"    json:"total"`
-	Offset   uint64   `db:"offset"   json:"offset"`
-	Limit    uint64   `db:"limit"    json:"limit"`
-	Category Category `db:"category" json:"category"`
-	UserID   string   `db:"user_id"  json:"user_id"`
-	IsRead   *bool    `db:"is_read"  json:"is_read"`
+	Total    uint64   `db:"total"              json:"total"`
+	Offset   uint64   `db:"offset"             json:"offset"`
+	Limit    uint64   `db:"limit"              json:"limit"`
+	Category Category `db:"category,omitempty" json:"category,omitempty"`
+	UserID   string   `db:"user_id,omitempty"  json:"user_id,omitempty"`
+	IDs      []string `db:"ids,omitempty"      json:"ids,omitempty"`
+	IsRead   *bool    `db:"is_read,omitempty"  json:"is_read,omitempty"`
 }
 
 type NotificationsPage struct {
@@ -113,37 +121,23 @@ func (page SettingsPage) MarshalJSON() ([]byte, error) {
 }
 
 //go:generate mockery --name Repository --output=./mocks --filename repository.go --quiet
-type Repository interface { //nolint:interfacebloat
+type Repository interface {
 	CreateNotification(ctx context.Context, notification Notification) (Notification, error)
 	RetrieveNotification(ctx context.Context, id string) (Notification, error)
 	RetrieveAllNotifications(ctx context.Context, page Page) (NotificationsPage, error)
 	ReadNotification(ctx context.Context, userID, id string) error
 	ReadAllNotifications(ctx context.Context, page Page) error
 	DeleteNotification(ctx context.Context, id string) error
-
-	CreateSetting(ctx context.Context, setting Setting) (Setting, error)
-	RetrieveSetting(ctx context.Context, id string) (Setting, error)
-	RetrieveAllSettings(ctx context.Context, page Page) (SettingsPage, error)
-	UpdateSetting(ctx context.Context, setting Setting) error
-	UpdateEmailSetting(ctx context.Context, id string, isEnabled bool) error
-	UpdatePushSetting(ctx context.Context, id string, isEnabled bool) error
-	DeleteSetting(ctx context.Context, id string) error
 }
 
 //go:generate mockery --name Service --output=./mocks --filename service.go --quiet
-type Service interface { //nolint:interfacebloat
-	CreateNotification(ctx context.Context, token string, notification Notification) (Notification, error)
+type Service interface {
+	CreateNotification(ctx context.Context, notification Notification) (Notification, error)
+	IdentifyUser(ctx context.Context, token string) (string, error)
+	GetNewNotification(ctx context.Context, userID string) Notification
 	RetrieveNotification(ctx context.Context, token string, id string) (Notification, error)
 	RetrieveAllNotifications(ctx context.Context, token string, page Page) (NotificationsPage, error)
 	ReadNotification(ctx context.Context, token string, id string) error
 	ReadAllNotifications(ctx context.Context, token string, page Page) error
 	DeleteNotification(ctx context.Context, token string, id string) error
-
-	CreateSetting(ctx context.Context, token string, setting Setting) (Setting, error)
-	RetrieveSetting(ctx context.Context, token string, id string) (Setting, error)
-	RetrieveAllSettings(ctx context.Context, token string, page Page) (SettingsPage, error)
-	UpdateSetting(ctx context.Context, token string, setting Setting) error
-	UpdateEmailSetting(ctx context.Context, token string, id string, isEnabled bool) error
-	UpdatePushSetting(ctx context.Context, token string, id string, isEnabled bool) error
-	DeleteSetting(ctx context.Context, token string, id string) error
 }

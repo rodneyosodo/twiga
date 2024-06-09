@@ -29,6 +29,7 @@ type client struct {
 	timeout            time.Duration
 	getUserByID        endpoint.Endpoint
 	getUserPreferences endpoint.Endpoint
+	getUserFollowers   endpoint.Endpoint
 	createFeed         endpoint.Endpoint
 	identifyUser       endpoint.Endpoint
 }
@@ -51,6 +52,15 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) proto.UsersServiceC
 			encodeGetUserPreferencesRequest,
 			decodeGetUserPreferencesResponse,
 			proto.GetUserPreferencesResponse{},
+		).Endpoint(),
+
+		getUserFollowers: kitgrpc.NewClient(
+			conn,
+			svcName,
+			"GetUserFollowers",
+			encodeGetUserFollowersRequest,
+			decodeGetUserFollowersResponse,
+			proto.GetUserFollowersResponse{},
 		).Endpoint(),
 
 		createFeed: kitgrpc.NewClient(
@@ -138,6 +148,41 @@ func encodeGetUserPreferencesRequest(_ context.Context, grpcReq interface{}) (in
 
 func decodeGetUserPreferencesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
 	res, ok := grpcRes.(*proto.GetUserPreferencesResponse)
+	if !ok {
+		return nil, errors.New("invalid response")
+	}
+
+	return res, nil
+}
+
+func (c *client) GetUserFollowers(ctx context.Context, in *proto.GetUserFollowersRequest, _ ...grpc.CallOption) (*proto.GetUserFollowersResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	res, err := c.getUserFollowers(ctx, in)
+	if err != nil {
+		return nil, decodeError(err)
+	}
+
+	response, ok := res.(*proto.GetUserFollowersResponse)
+	if !ok {
+		return nil, errors.New("invalid response")
+	}
+
+	return response, nil
+}
+
+func encodeGetUserFollowersRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+	req, ok := grpcReq.(*proto.GetUserFollowersRequest)
+	if !ok {
+		return nil, errors.New("invalid request")
+	}
+
+	return req, nil
+}
+
+func decodeGetUserFollowersResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+	res, ok := grpcRes.(*proto.GetUserFollowersResponse)
 	if !ok {
 		return nil, errors.New("invalid response")
 	}

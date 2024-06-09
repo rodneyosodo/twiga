@@ -27,6 +27,8 @@ const (
 	withoutTLS security = iota
 	withTLS
 	withmTLS
+
+	buffSize = 10 * 1024 * 1024
 )
 
 var (
@@ -131,6 +133,8 @@ func connect(cfg Config) (*grpc.ClientConn, security, error) {
 
 	opts = append(
 		opts, grpc.WithTransportCredentials(tc),
+		grpc.WithReadBufferSize(buffSize),
+		grpc.WithWriteBufferSize(buffSize),
 	)
 
 	conn, err := grpc.NewClient(cfg.URL, opts...)

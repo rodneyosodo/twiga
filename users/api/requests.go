@@ -54,10 +54,11 @@ func (req EntityReq) validate() error {
 type EntitiesReq struct {
 	Token string
 	Page  users.Page
+	SVC   SVC
 }
 
 func (req EntitiesReq) validate() error {
-	if req.Token == "" {
+	if req.Token == "" && req.SVC == HTTP {
 		return errors.New("token is required")
 	}
 

@@ -28,6 +28,7 @@ const _ = grpc.SupportPackageIsVersion8
 const (
 	UsersService_GetUserByID_FullMethodName        = "/proto.UsersService/GetUserByID"
 	UsersService_GetUserPreferences_FullMethodName = "/proto.UsersService/GetUserPreferences"
+	UsersService_GetUserFollowers_FullMethodName   = "/proto.UsersService/GetUserFollowers"
 	UsersService_CreateFeed_FullMethodName         = "/proto.UsersService/CreateFeed"
 	UsersService_IdentifyUser_FullMethodName       = "/proto.UsersService/IdentifyUser"
 )
@@ -38,6 +39,7 @@ const (
 type UsersServiceClient interface {
 	GetUserByID(ctx context.Context, in *GetUserByIDRequest, opts ...grpc.CallOption) (*GetUserByIDResponse, error)
 	GetUserPreferences(ctx context.Context, in *GetUserPreferencesRequest, opts ...grpc.CallOption) (*GetUserPreferencesResponse, error)
+	GetUserFollowers(ctx context.Context, in *GetUserFollowersRequest, opts ...grpc.CallOption) (*GetUserFollowersResponse, error)
 	CreateFeed(ctx context.Context, in *CreateFeedRequest, opts ...grpc.CallOption) (*CreateFeedResponse, error)
 	IdentifyUser(ctx context.Context, in *IdentifyUserRequest, opts ...grpc.CallOption) (*IdentifyUserResponse, error)
 }
@@ -70,6 +72,16 @@ func (c *usersServiceClient) GetUserPreferences(ctx context.Context, in *GetUser
 	return out, nil
 }
 
+func (c *usersServiceClient) GetUserFollowers(ctx context.Context, in *GetUserFollowersRequest, opts ...grpc.CallOption) (*GetUserFollowersResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetUserFollowersResponse)
+	err := c.cc.Invoke(ctx, UsersService_GetUserFollowers_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *usersServiceClient) CreateFeed(ctx context.Context, in *CreateFeedRequest, opts ...grpc.CallOption) (*CreateFeedResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateFeedResponse)
@@ -96,6 +108,7 @@ func (c *usersServiceClient) IdentifyUser(ctx context.Context, in *IdentifyUserR
 type UsersServiceServer interface {
 	GetUserByID(context.Context, *GetUserByIDRequest) (*GetUserByIDResponse, error)
 	GetUserPreferences(context.Context, *GetUserPreferencesRequest) (*GetUserPreferencesResponse, error)
+	GetUserFollowers(context.Context, *GetUserFollowersRequest) (*GetUserFollowersResponse, error)
 	CreateFeed(context.Context, *CreateFeedRequest) (*CreateFeedResponse, error)
 	IdentifyUser(context.Context, *IdentifyUserRequest) (*IdentifyUserResponse, error)
 	mustEmbedUnimplementedUsersServiceServer()
@@ -110,6 +123,9 @@ func (UnimplementedUsersServiceServer) GetUserByID(context.Context, *GetUserByID
 }
 func (UnimplementedUsersServiceServer) GetUserPreferences(context.Context, *GetUserPreferencesRequest) (*GetUserPreferencesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetUserPreferences not implemented")
+}
+func (UnimplementedUsersServiceServer) GetUserFollowers(context.Context, *GetUserFollowersRequest) (*GetUserFollowersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetUserFollowers not implemented")
 }
 func (UnimplementedUsersServiceServer) CreateFeed(context.Context, *CreateFeedRequest) (*CreateFeedResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateFeed not implemented")
@@ -166,6 +182,24 @@ func _UsersService_GetUserPreferences_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UsersService_GetUserFollowers_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetUserFollowersRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UsersServiceServer).GetUserFollowers(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UsersService_GetUserFollowers_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UsersServiceServer).GetUserFollowers(ctx, req.(*GetUserFollowersRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _UsersService_CreateFeed_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(CreateFeedRequest)
 	if err := dec(in); err != nil {
@@ -216,6 +250,10 @@ var UsersService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetUserPreferences",
 			Handler:    _UsersService_GetUserPreferences_Handler,
+		},
+		{
+			MethodName: "GetUserFollowers",
+			Handler:    _UsersService_GetUserFollowers_Handler,
 		},
 		{
 			MethodName: "CreateFeed",
