@@ -12,9 +12,9 @@ API Endpoints:
 
 - `POST /users`: Create a new user account.
 - `GET /users`: Retrieve user profile.
+- `PATCH /users/password`: Update user password.
 - `GET /users/{id}`: Retrieve user profile by ID.
 - `PUT /users/{id}`: Update user profile.
-- `PATCH /users/password`: Update user password.
   - `PATCH /users/{id}/username`: Update user username.
   - `PATCH /users/{id}/email`: Update user email.
   - `PATCH /users/{id}/bio`: Update user bio.
@@ -30,21 +30,23 @@ API Endpoints:
 - `PUT /users/preferences`: Update user notification preferences.
   - `PATCH /users/preferences/email`: Update email notification preference.
   - `PATCH /users/preferences/push`: Update push notification preference.
-- `DELETE /users/preferences`: Delete user notification preferences.
-
 - `GET /users/{id}/followers`: Retrieve user followers.
 - `GET /users/{id}/following`: Retrieve users followed by the user.
 
 - `POST /users/{id}/follow`: Follow a user.
-- `POST /users/{id}/unfollow`: Unfollow a user.
+- `DELETE /users/{id}/unfollow`: Unfollow a user.
 
-- `GET /users/{id}/feed`: Retrieve posts from users followed by the user.
+- `GET /users/feed`: Retrieve posts from users followed by the user.
+
+- `GET /version`: Retrieve service version.
+- `GET /metrics`: Retrieve service metrics.
 
 gRPC Services:
 
 - `GetUserByID`: Retrieve user profile by ID.
 - `GetUserPreferences`: Retrieve user notification preferences.
-- `UpdateFeed`: Update user feed with new posts.
+- `GetUserFollowers`: Retrieve user followers.
+- `CreateFeed`: Create a feed for a user.
 - `IdentifyUser`: Identify user based on session token.
 
 ## 2. Post Service
@@ -54,9 +56,11 @@ Exposes APIs for creating posts, fetching user posts, and retrieving post detail
 API Endpoints:
 
 - `POST /posts`: Create a new post.
+- `GET /posts`: Retrieve posts.
 - `GET /posts/{id}`: Retrieve a post by ID.
 - `PUT /posts/{id}`: Update a post.
   - `PATCH /posts/{id}/content`: Update post content.
+  - `PATCH /posts/{id}/tags`: Update post tags.
   - `PATCH /posts/{id}/image`: Update post image.
   - `PATCH /posts/{id}/tags`: Update post tags.
   - `PATCH /posts/{id}/visibility`: Update post visibility.
@@ -64,19 +68,20 @@ API Endpoints:
 
 - `POST /posts/{id}/comments`: Add a comment to a post.
 - `GET /posts/{id}/comments`: Retrieve comments on a post.
-- `PUT /posts/{id}/comments/{comment_id}`: Update a comment.
-- `DELETE /posts/{id}/comments/{comment_id}`: Delete a comment.
+- `GET /posts/comments/{comment_id}`: Retrieve a comment by ID.
+- `PUT /posts/comments/{comment_id}`: Update a comment.
+- `DELETE /posts/comments/{comment_id}`: Delete a comment.
 
-- `POST /posts/{id}/likes`: Like a post.
+- `POST /posts/{id}/like`: Like a post.
 - `GET /posts/{id}/likes`: Retrieve likes on a post.
-- `DELETE /posts/{id}/likes`: Unlike a post.
+- `DELETE /posts/{id}/unlike`: Unlike a post.
 
-- `POST /posts/{id}/shares`: Share a post.
+- `POST /posts/{id}/share`: Share a post.
 - `GET /posts/{id}/shares`: Retrieve shares of a post.
-- `DELETE /posts/{id}/shares`: Unshare a post.
+- `DELETE /posts/{id}/unshare`: Unshare a post.
 
-- `GET /users/{id}/posts`: Retrieve user posts.
-- `GET /users/{id}/posts/{post_id}`: Retrieve a user post by ID.
+- `GET /version`: Retrieve service version.
+- `GET /metrics`: Retrieve service metrics.
 
 ## 3. Notification Service
 
@@ -85,23 +90,17 @@ Consumes messages from message brokers published by User Service and Post Servic
 API Endpoints:
 
 - `GET /notifications`: Retrieve user notifications.
-- `DELETE /notifications/{id}`: Delete a notification.
-- `DELETE /notifications`: Delete all notifications.
+- `GET /notifications/{id}`: Retrieve a notification by ID.
 - `POST /notifications/{id}/read`: Mark a notification as read.
-- `POST /notifications/read-all`: Mark all notifications as read.
+- `POST /notifications/read`: Mark all notifications as read.
+- `DELETE /notifications/{id}`: Delete a notification.
 
-- `POST /notifications/settings`: Create notification settings.
-- `GET /notifications/settings`: Retrieve notification settings.
-- `PUT /notifications/settings`: Update notification settings.
-  - `POST /notifications/settings/email`: Enable email notifications.
-  - `POST /notifications/settings/push`: Enable push notifications.
-  - `DELETE /notifications/settings/email`: Disable email notifications.
-  - `DELETE /notifications/settings/push`: Disable push notifications.
-- `DELETE /notifications/settings`: Delete notification settings.
+- `GET /version`: Retrieve service version.
+- `GET /metrics`: Retrieve service metrics.
 
 WebSockets:
 
-- `ws://notifications`: Real-time notification delivery using WebSockets for a subscribed user.
+- `ws://ws`: Real-time notification delivery using WebSockets for a subscribed user.
 
 Cron Jobs:
 

@@ -51,6 +51,7 @@ func Endpoints(router *gin.Engine, svc notifications.Service) {
 
 	router.GET("/ws", wsHandler(svc))
 
+	router.GET("/version", iapi.GinVersion("notifications"))
 	router.GET("/metrics", ginprom.PromHandler(promhttp.Handler()))
 }
 
