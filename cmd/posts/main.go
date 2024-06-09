@@ -20,6 +20,7 @@ import (
 	"github.com/chenjiandongx/ginprom"
 	helmet "github.com/danielkov/gin-helmet"
 	"github.com/gin-gonic/gin"
+	"github.com/grafana/loki-client-go/loki"
 	"github.com/redis/go-redis/v9"
 	"github.com/rodneyosodo/twiga/internal/auth"
 	"github.com/rodneyosodo/twiga/internal/cache"
@@ -32,6 +33,8 @@ import (
 	"github.com/rodneyosodo/twiga/posts/producer"
 	"github.com/rodneyosodo/twiga/posts/repository"
 	sloggin "github.com/samber/slog-gin"
+	slogloki "github.com/samber/slog-loki/v3"
+	slogmulti "github.com/samber/slog-multi"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
@@ -57,6 +60,7 @@ type config struct {
 	ESURL            string        `env:"TWIGA_ES_URL"             envDefault:"amqp://twiga:twiga@localhost:5672/"`
 	CacheURL         string        `env:"TWIGA_CACHE_URL"          envDefault:"redis://localhost:6379/0"`
 	CacheKeyDuration time.Duration `env:"TWIGA_CACHE_KEY_DURATION" envDefault:"10m"`
+	LokiURL          string        `env:"TWIGA_LOKI_URL"           envDefault:"http://localhost:3100/loki/api/v1/push"`
 }
 
 func main() {
@@ -68,6 +72,17 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
 	}
 
+	config, err := loki.NewDefaultConfig(cfg.LokiURL)
+	if err != nil {
+		log.Fatalf("failed to create loki config: %s", err.Error())
+	}
+	config.TenantID = svcName
+	config.EncodeJson = true
+	client, err := loki.New(config)
+	if err != nil {
+		log.Fatalf("failed to create loki client: %s", err.Error())
+	}
+
 	var level slog.Level
 	if err := level.UnmarshalText([]byte(cfg.LogLevel)); err != nil {
 		log.Fatalf("failed to parse log level: %s", err.Error())
@@ -75,7 +90,9 @@ func main() {
 	logHandler := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: level,
 	})
-	logger := slog.New(logHandler)
+	lokiHandler := slogloki.Option{Level: level, Client: client}.NewLokiHandler()
+
+	logger := slog.New(slogmulti.Fanout(logHandler, lokiHandler))
 
 	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.TraceRatio)
 	if err != nil {

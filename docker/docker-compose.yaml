@@ -17,6 +17,7 @@ volumes:
   twiga-posts-db-config-volume:
   twiga-notifications-db-volume:
   twiga-dragonfly-volume:
+  twiga-prometheus-volume:
 
 services:
   twiga-users-db:
@@ -41,6 +42,7 @@ services:
       - twiga-users-db
       - rabbitmq
       - dragonfly
+      - loki
     ports:
       - ${TWIGA_USERS_HTTP_PORT}:${TWIGA_USERS_HTTP_PORT}
       - ${TWIGA_USERS_GRPC_PORT}:${TWIGA_USERS_GRPC_PORT}
@@ -74,7 +76,8 @@ services:
       TWIGA_USERS_DB_SSL_ROOT_CERT: ${TWIGA_USERS_DB_SSL_ROOT_CERT}
       TWIGA_ES_URL: ${TWIGA_ES_URL}
       TWIGA_CACHE_URL: ${TWIGA_CACHE_URL}
-      TWIGA_CACHE_KEY_DURATION: ${TWIGA_CACHE_KEY_DURATION}      
+      TWIGA_CACHE_KEY_DURATION: ${TWIGA_CACHE_KEY_DURATION}
+      TWIGA_LOKI_URL: ${TWIGA_LOKI_URL}
 
   twiga-posts-db:
     image: mongo:7.0.11
@@ -98,6 +101,7 @@ services:
       - twiga-users
       - rabbitmq
       - dragonfly
+      - loki
     ports:
       - ${TWIGA_POSTS_HTTP_PORT}:${TWIGA_POSTS_HTTP_PORT}
     restart: on-failure
@@ -121,7 +125,8 @@ services:
       TWIGA_USERS_GRPC_SERVER_CA_CERTS: ${TWIGA_USERS_GRPC_SERVER_CA_CERTS}
       TWIGA_ES_URL: ${TWIGA_ES_URL}
       TWIGA_CACHE_URL: ${TWIGA_CACHE_URL}
-      TWIGA_CACHE_KEY_DURATION: ${TWIGA_CACHE_KEY_DURATION}      
+      TWIGA_CACHE_KEY_DURATION: ${TWIGA_CACHE_KEY_DURATION}
+      TWIGA_LOKI_URL: ${TWIGA_LOKI_URL}
 
   twiga-notifications-db:
     image: postgres:16.3-alpine
@@ -146,6 +151,7 @@ services:
       - twiga-users
       - rabbitmq
       - dragonfly
+      - loki
     ports:
       - ${TWIGA_NOTIFICATIONS_HTTP_PORT}:${TWIGA_NOTIFICATIONS_HTTP_PORT}
     restart: on-failure
@@ -176,6 +182,7 @@ services:
       TWIGA_ES_URL: ${TWIGA_ES_URL}
       TWIGA_CACHE_URL: ${TWIGA_CACHE_URL}
       TWIGA_CACHE_KEY_DURATION: ${TWIGA_CACHE_KEY_DURATION}
+      TWIGA_LOKI_URL: ${TWIGA_LOKI_URL}
 
   jaeger:
     image: jaegertracing/all-in-one:1.57.0
@@ -217,3 +224,52 @@ services:
       memlock: -1
     volumes:
       - twiga-dragonfly-volume:/data
+
+  promethues:
+    image: prom/prometheus:v2.52.0
+    container_name: twiga-prometheus
+    restart: on-failure
+    ports:
+      - ${TWIGA_PROMETHEUS_PORT}:${TWIGA_PROMETHEUS_PORT}
+    networks:
+      - twiga-base-network
+    volumes:
+      - type: bind
+        source: ./prometheus/prometheus.yaml
+        target: /etc/prometheus/prometheus.yml
+      - twiga-prometheus-volume:/prometheus
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: twiga-grafana
+    depends_on:
+      - promethues
+    restart: on-failure
+    ports:
+      - ${TWIGA_GRAFANA_PORT}:${TWIGA_GRAFANA_PORT}
+    environment:
+      - GF_SECURITY_ADMIN_USER=${TWIGA_GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${TWIGA_GRAFANA_ADMIN_PASSWORD}
+    networks:
+      - twiga-base-network
+    volumes:
+      - type: bind
+        source: ./grafana/datasource.yaml
+        target: /etc/grafana/provisioning/datasources/datasource.yml
+      - type: bind
+        source: ./grafana/dashboard.yaml
+        target: /etc/grafana/provisioning/dashboards/main.yaml
+
+  loki:
+    image: grafana/loki:2.9.8
+    container_name: twiga-loki
+    depends_on:
+      - grafana
+    restart: on-failure
+    ports:
+      - ${TWIGA_GRAFANA_LOKI_PORT}:${TWIGA_GRAFANA_LOKI_PORT}
+    command: "-config.file=/etc/loki/config.yaml -target=all"
+    volumes:
+      - ./loki/loki-config.yaml:/etc/loki/config.yaml
+    networks:
+      - twiga-base-network
