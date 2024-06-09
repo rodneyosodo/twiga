@@ -9,26 +9,34 @@ package cache
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
+var _ Cacher = (*cache)(nil)
+
 type cache struct {
 	client   *redis.Client
 	duration time.Duration
 }
 
-func NewCache(client *redis.Client, duration time.Duration) Cache {
+func NewCache(client *redis.Client, duration time.Duration) Cacher {
 	return &cache{
 		client:   client,
 		duration: duration,
 	}
 }
 
-func (c *cache) Add(ctx context.Context, key, value string) error {
-	return c.client.Set(ctx, key, value, c.duration).Err()
+func (c *cache) Add(ctx context.Context, key string, value interface{}) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+
+	return c.client.Set(ctx, key, string(data), c.duration).Err()
 }
 
 func (c *cache) Remove(ctx context.Context, key string) error {
@@ -39,11 +47,11 @@ func (c *cache) Remove(ctx context.Context, key string) error {
 	return nil
 }
 
-func (c *cache) Contains(ctx context.Context, key, value string) bool {
+func (c *cache) Get(ctx context.Context, key string) interface{} {
 	result, err := c.client.Get(ctx, key).Result()
 	if err != nil && !errors.Is(err, redis.Nil) {
 		return false
 	}
 
-	return result == value
+	return result
 }

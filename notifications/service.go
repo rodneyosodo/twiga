@@ -10,9 +10,8 @@ package notifications
 import (
 	"context"
 	"errors"
-	"fmt"
-	"sync"
 
+	"github.com/rodneyosodo/twiga/internal/cache"
 	"github.com/rodneyosodo/twiga/users/proto"
 )
 
@@ -21,19 +20,16 @@ const defLimit = 100
 var _ Service = (*service)(nil)
 
 type service struct {
-	repo      Repository
-	users     proto.UsersServiceClient
-	mu        sync.RWMutex
-	nots      map[string]Notification
-	followers map[string][]string
+	repo   Repository
+	users  proto.UsersServiceClient
+	cacher cache.Cacher
 }
 
-func NewService(repo Repository, users proto.UsersServiceClient) Service {
+func NewService(repo Repository, users proto.UsersServiceClient, cacher cache.Cacher) Service {
 	return &service{
-		repo:      repo,
-		users:     users,
-		nots:      make(map[string]Notification),
-		followers: make(map[string][]string),
+		repo:   repo,
+		users:  users,
+		cacher: cacher,
 	}
 }
 
@@ -43,9 +39,9 @@ func (s *service) CreateNotification(ctx context.Context, notification Notificat
 		return Notification{}, err
 	}
 
-	s.mu.Lock()
-	s.nots[notification.UserID] = notification
-	s.mu.Unlock()
+	if err := s.cacher.Add(ctx, notification.ID, notification); err != nil {
+		return Notification{}, errors.New("failed to cache notification")
+	}
 
 	return notification, nil
 }
@@ -75,29 +71,28 @@ func (s *service) IdentifyUser(ctx context.Context, token string) (string, error
 		userIDs = append(userIDs, f.FolloweeId)
 	}
 
-	s.mu.Lock()
-	s.followers[resp.GetId()] = userIDs
-	s.mu.Unlock()
+	if err := s.cacher.Add(ctx, resp.GetId(), userIDs); err != nil {
+		return "", errors.New("failed to cache followers")
+	}
 
 	return resp.GetId(), nil
 }
 
 func (s *service) GetNewNotification(ctx context.Context, userID string) Notification {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	fmt.Println(s.followers[userID])
-	fmt.Println(s.nots)
-
-	ids, ok := s.followers[userID]
+	ids, ok := s.cacher.Get(ctx, userID).([]interface{})
 	if !ok {
 		return Notification{}
 	}
 
 	for _, id := range ids {
-		n, ok := s.nots[id]
+		id, ok := id.(string)
+		if !ok {
+			continue
+		}
+
+		n, ok := s.cacher.Get(ctx, id).(Notification)
 		if ok {
-			defer delete(s.nots, id)
+			defer s.cacher.Remove(ctx, id)
 
 			return n
 		}

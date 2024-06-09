@@ -14,6 +14,7 @@ import (
 
 	"github.com/0x6flab/namegenerator"
 	"github.com/gofrs/uuid"
+	"github.com/rodneyosodo/twiga/internal/cache"
 )
 
 var (
@@ -27,15 +28,17 @@ type service struct {
 	followingRepo   FollowingRepository
 	feedRepo        FeedRepository
 	tokenizer       Tokenizer
+	cacher          cache.Cacher
 }
 
-func NewService(usersRepo UsersRepository, preferencesRepo PreferencesRepository, followingRepo FollowingRepository, feedRepo FeedRepository, tokenizer Tokenizer) Service {
+func NewService(usersRepo UsersRepository, preferencesRepo PreferencesRepository, followingRepo FollowingRepository, feedRepo FeedRepository, tokenizer Tokenizer, cacher cache.Cacher) Service {
 	return &service{
 		usersRepo:       usersRepo,
 		preferencesRepo: preferencesRepo,
 		followingRepo:   followingRepo,
 		feedRepo:        feedRepo,
 		tokenizer:       tokenizer,
+		cacher:          cacher,
 	}
 }
 
@@ -89,10 +92,26 @@ func (s *service) CreateUser(ctx context.Context, user User) (User, error) {
 	}
 	user.Password = hashedPassword
 
+	defer func() {
+		if err == nil {
+			user.Password = ""
+			if err = s.cacher.Add(ctx, user.ID, user); err != nil {
+				err = errors.New("failed to cache user")
+			}
+		}
+	}()
+
 	return s.usersRepo.Create(ctx, user)
 }
 
-func (s *service) GetUserByID(ctx context.Context, token string, id string) (User, error) {
+func (s *service) GetUserByID(ctx context.Context, token string, id string) (saved User, err error) {
+	if cached := s.cacher.Get(ctx, id); cached != nil {
+		saved, ok := cached.(User)
+		if ok {
+			return saved, nil
+		}
+	}
+
 	return s.usersRepo.RetrieveByID(ctx, id)
 }
 
@@ -104,34 +123,33 @@ func (s *service) GetUsers(ctx context.Context, token string, page Page) (UsersP
 	return s.usersRepo.RetrieveAll(ctx, page)
 }
 
-func (s *service) UpdateUser(ctx context.Context, token string, user User) (User, error) {
-	userID, err := s.tokenizer.Validate(token)
-	if err != nil {
+func (s *service) UpdateUser(ctx context.Context, token string, user User) (updated User, err error) {
+	if err := s.authorize(ctx, token, user.ID); err != nil {
 		return User{}, err
 	}
-	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
-	if err != nil {
-		return User{}, err
-	}
-	if saved.ID != user.ID {
-		return User{}, errors.New("unauthorized")
-	}
+
+	defer func() {
+		if err == nil {
+			if err = s.cacher.Add(ctx, updated.ID, updated); err != nil {
+				err = errors.New("failed to cache user")
+			}
+		}
+	}()
 
 	return s.usersRepo.Update(ctx, user)
 }
 
-func (s *service) UpdateUserUsername(ctx context.Context, token string, user User) (User, error) {
-	userID, err := s.tokenizer.Validate(token)
-	if err != nil {
+func (s *service) UpdateUserUsername(ctx context.Context, token string, user User) (updated User, err error) {
+	if err := s.authorize(ctx, token, user.ID); err != nil {
 		return User{}, err
 	}
-	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
-	if err != nil {
-		return User{}, err
-	}
-	if saved.ID != user.ID {
-		return User{}, errors.New("unauthorized")
-	}
+	defer func() {
+		if err == nil {
+			if err = s.cacher.Add(ctx, updated.ID, updated); err != nil {
+				err = errors.New("failed to cache user")
+			}
+		}
+	}()
 
 	return s.usersRepo.UpdateUsername(ctx, user)
 }
@@ -167,66 +185,66 @@ func (s *service) UpdateUserPassword(ctx context.Context, token string, oldPassw
 	return s.usersRepo.UpdatePassword(ctx, user)
 }
 
-func (s *service) UpdateUserEmail(ctx context.Context, token string, user User) (User, error) {
-	userID, err := s.tokenizer.Validate(token)
-	if err != nil {
+func (s *service) UpdateUserEmail(ctx context.Context, token string, user User) (updated User, err error) {
+	if err := s.authorize(ctx, token, user.ID); err != nil {
 		return User{}, err
 	}
-	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
-	if err != nil {
-		return User{}, err
-	}
-	if saved.ID != user.ID {
-		return User{}, errors.New("unauthorized")
-	}
+
+	defer func() {
+		if err == nil {
+			if err = s.cacher.Add(ctx, updated.ID, updated); err != nil {
+				err = errors.New("failed to cache user")
+			}
+		}
+	}()
 
 	return s.usersRepo.UpdateEmail(ctx, user)
 }
 
-func (s *service) UpdateUserBio(ctx context.Context, token string, user User) (User, error) {
-	userID, err := s.tokenizer.Validate(token)
-	if err != nil {
+func (s *service) UpdateUserBio(ctx context.Context, token string, user User) (updated User, err error) {
+	if err := s.authorize(ctx, token, user.ID); err != nil {
 		return User{}, err
 	}
-	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
-	if err != nil {
-		return User{}, err
-	}
-	if saved.ID != user.ID {
-		return User{}, errors.New("unauthorized")
-	}
+
+	defer func() {
+		if err == nil {
+			if err = s.cacher.Add(ctx, updated.ID, updated); err != nil {
+				err = errors.New("failed to cache user")
+			}
+		}
+	}()
 
 	return s.usersRepo.UpdateBio(ctx, user)
 }
 
-func (s *service) UpdateUserPictureURL(ctx context.Context, token string, user User) (User, error) {
-	userID, err := s.tokenizer.Validate(token)
-	if err != nil {
+func (s *service) UpdateUserPictureURL(ctx context.Context, token string, user User) (updated User, err error) {
+	if err := s.authorize(ctx, token, user.ID); err != nil {
 		return User{}, err
 	}
-	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
-	if err != nil {
-		return User{}, err
-	}
-	if saved.ID != user.ID {
-		return User{}, errors.New("unauthorized")
-	}
+
+	defer func() {
+		if err == nil {
+			if err = s.cacher.Add(ctx, updated.ID, updated); err != nil {
+				err = errors.New("failed to cache user")
+			}
+		}
+	}()
 
 	return s.usersRepo.UpdatePictureURL(ctx, user)
 }
 
-func (s *service) UpdateUserPreferences(ctx context.Context, token string, user User) (User, error) {
-	userID, err := s.tokenizer.Validate(token)
-	if err != nil {
+func (s *service) UpdateUserPreferences(ctx context.Context, token string, user User) (updated User, err error) {
+	if err := s.authorize(ctx, token, user.ID); err != nil {
 		return User{}, err
 	}
-	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
-	if err != nil {
-		return User{}, err
-	}
-	if saved.ID != user.ID {
-		return User{}, errors.New("unauthorized")
-	}
+
+	defer func() {
+		if err == nil {
+			if err = s.cacher.Add(ctx, updated.ID, updated); err != nil {
+				err = errors.New("failed to cache user")
+			}
+		}
+	}()
 
 	return s.usersRepo.UpdatePreferences(ctx, user)
 }
@@ -366,4 +384,31 @@ func (s *service) IdentifyUser(ctx context.Context, token string) (string, error
 	}
 
 	return userID, nil
+}
+
+func (s *service) authorize(ctx context.Context, token, id string) error {
+	userID, err := s.tokenizer.Validate(token)
+	if err != nil {
+		return err
+	}
+
+	if cached := s.cacher.Get(ctx, id); cached != nil {
+		saved, ok := cached.(User)
+		if ok {
+			if saved.ID == userID {
+				return nil
+			}
+		}
+	}
+
+	saved, err := s.usersRepo.RetrieveByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if saved.ID != id {
+		return errors.New("unauthorized")
+	}
+
+	return nil
 }

@@ -9,8 +9,8 @@ package cache
 
 import "context"
 
-type Cache interface {
-	Add(ctx context.Context, key, value string) error
+type Cacher interface {
+	Add(ctx context.Context, key string, value interface{}) error
 	Remove(ctx context.Context, key string) error
-	Contains(ctx context.Context, key, value string) bool
+	Get(ctx context.Context, key string) interface{}
 }

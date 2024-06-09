@@ -17,6 +17,8 @@ import (
 	"time"
 
 	"github.com/caarlos0/env/v10"
+	"github.com/redis/go-redis/v9"
+	"github.com/rodneyosodo/twiga/internal/cache"
 	"github.com/rodneyosodo/twiga/internal/events/rabbitmq"
 	"github.com/rodneyosodo/twiga/internal/jaeger"
 	"github.com/rodneyosodo/twiga/internal/postgres"
@@ -49,12 +51,14 @@ const (
 )
 
 type config struct {
-	LogLevel   string        `env:"TWIGA_USERS_LOG_LEVEL"    envDefault:"info"`
-	JWTSecret  string        `env:"TWIGA_USERS_JWT_SECRET"   envDefault:"secret"`
-	JWTExp     time.Duration `env:"TWIGA_USERS_JWT_EXP"      envDefault:"24h"`
-	JaegerURL  url.URL       `env:"TWIGA_JAEGER_URL"         envDefault:"http://localhost:14268"`
-	TraceRatio float64       `env:"TWIGA_JAEGER_TRACE_RATIO" envDefault:"1.0"`
-	ESURL      string        `env:"TWIGA_ES_URL"             envDefault:"amqp://twiga:twiga@localhost:5672/"`
+	LogLevel         string        `env:"TWIGA_USERS_LOG_LEVEL"    envDefault:"info"`
+	JWTSecret        string        `env:"TWIGA_USERS_JWT_SECRET"   envDefault:"secret"`
+	JWTExp           time.Duration `env:"TWIGA_USERS_JWT_EXP"      envDefault:"24h"`
+	JaegerURL        url.URL       `env:"TWIGA_JAEGER_URL"         envDefault:"http://localhost:14268"`
+	TraceRatio       float64       `env:"TWIGA_JAEGER_TRACE_RATIO" envDefault:"1.0"`
+	ESURL            string        `env:"TWIGA_ES_URL"             envDefault:"amqp://twiga:twiga@localhost:5672/"`
+	CacheURL         string        `env:"TWIGA_CACHE_URL"          envDefault:"redis://localhost:6379/0"`
+	CacheKeyDuration time.Duration `env:"TWIGA_CACHE_KEY_DURATION" envDefault:"10m"`
 }
 
 func main() {
@@ -101,7 +105,7 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	svc, err := newService(db, tracer, cfg, logger)
+	svc, err := newService(ctx, db, tracer, cfg, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
 		cancel()
@@ -145,14 +149,19 @@ func main() {
 	}
 }
 
-func newService(db postgres.Database, tracer trace.Tracer, cfg config, logger *slog.Logger) (users.Service, error) {
+func newService(ctx context.Context, db postgres.Database, tracer trace.Tracer, cfg config, logger *slog.Logger) (users.Service, error) {
 	urepo := repository.NewUsersRepository(db)
 	prepo := repository.NewPreferencesRepository(db)
 	forepo := repository.NewFollowingRepository(db)
 	frepo := repository.NewFeedRepository(db)
 	tokenizer := jwt.NewTokenizer(cfg.JWTSecret, cfg.JWTExp)
 
-	svc := users.NewService(urepo, prepo, forepo, frepo, tokenizer)
+	cacher, err := connectToCache(ctx, cfg.CacheURL, cfg.CacheKeyDuration)
+	if err != nil {
+		return nil, err
+	}
+
+	svc := users.NewService(urepo, prepo, forepo, frepo, tokenizer, cacher)
 	svc = middleware.NewLoggingMiddleware(logger, svc)
 	svc = middleware.NewTracingMiddleware(tracer, svc)
 	counter, latency := prometheus.MakeMetrics("users", "api")
@@ -165,4 +174,18 @@ func newService(db postgres.Database, tracer trace.Tracer, cfg config, logger *s
 	svc = producer.NewEventStore(publisher, svc)
 
 	return svc, nil
+}
+
+func connectToCache(ctx context.Context, url string, duration time.Duration) (cache.Cacher, error) {
+	opts, err := redis.ParseURL(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse redis url: %w", err)
+	}
+
+	client := redis.NewClient(opts)
+	if _, err := client.Ping(ctx).Result(); err != nil {
+		return nil, fmt.Errorf("failed to ping redis: %w", err)
+	}
+
+	return cache.NewCache(redis.NewClient(opts), duration), nil
 }

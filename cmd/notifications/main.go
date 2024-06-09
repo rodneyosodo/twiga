@@ -14,12 +14,15 @@ import (
 	"log/slog"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/caarlos0/env/v10"
 	"github.com/chenjiandongx/ginprom"
 	helmet "github.com/danielkov/gin-helmet"
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"github.com/rodneyosodo/twiga/internal/auth"
+	"github.com/rodneyosodo/twiga/internal/cache"
 	"github.com/rodneyosodo/twiga/internal/events"
 	"github.com/rodneyosodo/twiga/internal/events/rabbitmq"
 	"github.com/rodneyosodo/twiga/internal/jaeger"
@@ -45,10 +48,12 @@ const (
 )
 
 type config struct {
-	LogLevel   string  `env:"TWIGA_NOTIFICATIONS_LOG_LEVEL" envDefault:"info"`
-	JaegerURL  url.URL `env:"TWIGA_JAEGER_URL"              envDefault:"http://localhost:14268"`
-	TraceRatio float64 `env:"TWIGA_JAEGER_TRACE_RATIO"      envDefault:"1.0"`
-	ESURL      string  `env:"TWIGA_ES_URL"                  envDefault:"amqp://twiga:twiga@localhost:5672/"`
+	LogLevel         string        `env:"TWIGA_NOTIFICATIONS_LOG_LEVEL" envDefault:"info"`
+	JaegerURL        url.URL       `env:"TWIGA_JAEGER_URL"              envDefault:"http://localhost:14268"`
+	TraceRatio       float64       `env:"TWIGA_JAEGER_TRACE_RATIO"      envDefault:"1.0"`
+	ESURL            string        `env:"TWIGA_ES_URL"                  envDefault:"amqp://twiga:twiga@localhost:5672/"`
+	CacheURL         string        `env:"TWIGA_CACHE_URL"               envDefault:"redis://localhost:6379/0"`
+	CacheKeyDuration time.Duration `env:"TWIGA_CACHE_KEY_DURATION"      envDefault:"10m"`
 }
 
 func main() {
@@ -112,8 +117,14 @@ func main() {
 	logger.Info("Successfully connected to users grpc server " + ucHandler.Secure())
 
 	repo := repository.NewRepository(db)
+	cacher, err := connectToCache(ctx, cfg.CacheURL, cfg.CacheKeyDuration)
+	if err != nil {
+		logger.Error(err.Error())
+		cancel()
+		os.Exit(1)
+	}
 
-	svc := notifications.NewService(repo, uc)
+	svc := notifications.NewService(repo, uc, cacher)
 
 	pubsub, err := rabbitmq.NewPubSub(cfg.ESURL, logger)
 	if err != nil {
@@ -161,4 +172,18 @@ func main() {
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("%s service terminated: %s", svcName, err))
 	}
+}
+
+func connectToCache(ctx context.Context, url string, duration time.Duration) (cache.Cacher, error) {
+	opts, err := redis.ParseURL(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse redis url: %w", err)
+	}
+
+	client := redis.NewClient(opts)
+	if _, err := client.Ping(ctx).Result(); err != nil {
+		return nil, fmt.Errorf("failed to ping redis: %w", err)
+	}
+
+	return cache.NewCache(redis.NewClient(opts), duration), nil
 }
