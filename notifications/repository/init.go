@@ -26,24 +26,12 @@ func Migration() *migrate.MemoryMigrationSource {
 						created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 						updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 					)`,
-					`CREATE TABLE IF NOT EXISTS settings (
-						id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
-						user_id UUID UNIQUE NOT NULL,
-						email_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-						push_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-						created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-						updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-					)`,
 					`CREATE INDEX idx_notifications_user_id ON notifications(user_id);`,
 					`CREATE INDEX idx_notifications_category ON notifications(category);`,
 					`CREATE INDEX idx_notifications_is_read ON notifications(is_read);`,
-					`CREATE INDEX idx_settings_user_id ON settings(user_id);`,
-					`CREATE INDEX idx_settings_email_enabled ON settings(email_enabled);`,
-					`CREATE INDEX idx_settings_push_enabled ON settings(push_enabled);`,
 				},
 				Down: []string{
 					`DROP TABLE IF EXISTS notifications CASCADE`,
-					`DROP TABLE IF EXISTS settings CASCADE`,
 				},
 			},
 		},
