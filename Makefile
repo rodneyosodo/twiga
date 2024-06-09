@@ -12,6 +12,7 @@ DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 BUILD_DIR = build
 GOOS ?= $(shell go env GOOS)
 GOARCH ?= $(shell go env GOARCH)
+GOARM ?= $(shell go env GOARM)
 CGO_ENABLED ?= 0
 VERSION ?= $(shell git describe --abbrev=0 --tags 2>/dev/null || echo "v0.0.0")
 TIME ?= $(shell date +%F_%T)

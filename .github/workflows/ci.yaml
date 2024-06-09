@@ -1,0 +1,66 @@
+# Copyright (c) 2024 rodneyosodo
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at:
+# http://www.apache.org/licenses/LICENSE-2.0
+
+name: Continuous Integration
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22.x
+          cache-dependency-path: "go.sum"
+
+      - name: Check for changes in go.mod
+        run: |
+          go mod tidy
+          git diff --exit-code
+
+      - name: Check for changes in generated mocks
+        run: |
+          MOCKERY_VERSION=v2.42.3
+          go install github.com/vektra/mockery/v2@$MOCKERY_VERSION        
+          make mocks
+          git diff --exit-code
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.59.0
+
+      - name: Build Binaries
+        run: |
+          make all -j $(nproc)
+
+      - name: Run tests
+        run: |
+          make test
+
+      - name: Install goveralls
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: go install github.com/mattn/goveralls@latest
+
+      - name: Send coverage
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          COVERALLS_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        run: goveralls -coverprofile=cover.out -service=github

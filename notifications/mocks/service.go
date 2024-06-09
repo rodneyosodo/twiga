@@ -60,6 +60,52 @@ func (_m *Service) DeleteNotification(ctx context.Context, token string, id stri
 	return r0
 }
 
+// GetNewNotification provides a mock function with given fields: ctx, userID
+func (_m *Service) GetNewNotification(ctx context.Context, userID string) notifications.Notification {
+	ret := _m.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetNewNotification")
+	}
+
+	var r0 notifications.Notification
+	if rf, ok := ret.Get(0).(func(context.Context, string) notifications.Notification); ok {
+		r0 = rf(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(notifications.Notification)
+	}
+
+	return r0
+}
+
+// IdentifyUser provides a mock function with given fields: ctx, token
+func (_m *Service) IdentifyUser(ctx context.Context, token string) (string, error) {
+	ret := _m.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IdentifyUser")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (string, error)); ok {
+		return rf(ctx, token)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) string); ok {
+		r0 = rf(ctx, token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, token)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // ReadAllNotifications provides a mock function with given fields: ctx, token, page
 func (_m *Service) ReadAllNotifications(ctx context.Context, token string, page notifications.Page) error {
 	ret := _m.Called(ctx, token, page)
