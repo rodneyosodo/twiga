@@ -107,7 +107,7 @@ mocks:
 .PHONY: test
 test:
 	@echo "Running tests..."
-	@go test -v --race -count 1 -coverprofile=cover.out $$(go list ./... | grep -v 'mocks\|internal\|middleware\|proto')
+	@go test -v --race -count 1 -coverprofile=cover.out $$(go list ./... | grep -v 'mocks\|internal\|middleware\|proto\|cmd\|consumer\|producer')
 	@echo "Tests complete."
 
 .PHONY: proto

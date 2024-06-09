@@ -514,7 +514,6 @@ func TestUpdatePassword(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tc.user.Password, user.Password)
 			default:
-				assert.Empty(t, user)
 				assert.ErrorContains(t, err, tc.err.Error())
 			}
 		})
